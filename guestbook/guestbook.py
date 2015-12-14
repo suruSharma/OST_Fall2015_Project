@@ -13,6 +13,22 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
+class Add(webapp2.RequestHandler):
+    def get(self):
+        #will just print the empty form by calling add.html
+        template = JINJA_ENVIRONMENT.get_template('add.html')
+        template_values = {}
+        self.response.write(template.render(template_values))
+    
+    def post(self):
+        #This will be used to add a restore to the datastore. Will be called when the user clicks on submit button on the Add Resource Page
+        template = JINJA_ENVIRONMENT.get_template('index.html')
+        name = self.request.get('nameInput')
+        startTime = self.request.get('startInput')
+        endTime = self.request.get('endInput')
+        tags = self.request.get('tagsInput')
+            
+        
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
@@ -37,4 +53,5 @@ class MainPage(webapp2.RequestHandler):
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
+    ('/add' Add),
 ], debug=True)

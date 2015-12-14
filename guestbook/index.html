@@ -2,10 +2,24 @@
 {% autoescape true %}
 <html>
   <head>
+    <title>Reserve Resources</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">  
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>  
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
     <h1>Hi, {{user}}</h1>
+    
+    <form action="/add" method="get">
+      <div class="form-group">        
+      <div class="col-sm-offset-2 col-sm-10">
+        <button type="submit" class="btn btn-default">Add new resource</button>
+      </div>
+    </div>
+    </form>
     
     <a class="button" href="{{ url|safe }}">{{ url_linktext }}</a>
 
