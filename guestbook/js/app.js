@@ -4,7 +4,7 @@ $(document).ready(function() {
     $("#startInput").bind("change paste keyup", isFormValid);
     $("#endInput").bind("change paste keyup", isFormValid);
     $("#tagsInput").bind("change paste keyup", isFormValid);
-     
+    $("#availDate").bind("change paste keyup", isFormValid);
 });
  
 function isFormValid()

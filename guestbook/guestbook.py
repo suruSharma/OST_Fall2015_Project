@@ -45,6 +45,7 @@ class Resource(ndb.Model):
     lastReservedTime = ndb.DateTimeProperty(auto_now_add=False)
     startString = ndb.StringProperty()
     endString = ndb.StringProperty()
+    dateString = ndb.StringProperty()
     
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -69,6 +70,8 @@ class Add(webapp2.RequestHandler):
         resourceTags = self.request.get('tagsInput')
         startInput = self.request.get('startInput')
         endInput = self.request.get('endInput')
+        dateInput = self.request.get('availDate')
+        logging.info(dateInput)
         resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
         if(resourceEnd <= resourceStart):
@@ -94,6 +97,7 @@ class Add(webapp2.RequestHandler):
         resource.owner = str(users.get_current_user().email())
         resource.reservations = []
         resource.id = str(uuid.uuid4())
+        resource.dateString = dateInput
         resource.put()
         
         #Go back to the main page
@@ -120,6 +124,7 @@ class UpdateResource(webapp2.RequestHandler):
         endInput = self.request.get('endInput')
         resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
+        resourceDate = self.request.get('availDate')
         id = self.request.get('id')
         
         resource = getResourceById(id)
@@ -131,6 +136,7 @@ class UpdateResource(webapp2.RequestHandler):
         resource[0].owner = str(users.get_current_user().email())
         resource[0].reservations = []
         resource[0].id = id
+        resource[0].dateString = resourceDate
         resource[0].put()
         
         #Go back to the main page
@@ -155,6 +161,7 @@ class EditResource(webapp2.RequestHandler):
                 'endTime': resource[0].endString,
                 'tags': ', '.join(resource[0].tags),
                 'uid' : resource[0].id,
+                'availDate' : resource[0].dateString,
             }
         template = JINJA_ENVIRONMENT.get_template('editResource.html')
         self.response.write(template.render(template_values))
