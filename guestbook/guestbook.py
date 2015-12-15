@@ -2,18 +2,19 @@ import os
 import urllib
 import datetime
 import uuid
+import logging
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from google.appengine.ext import db
 
 import jinja2
 import webapp2
 
+DEFAULT_KEY = "default_key"
+
 def resource_key():
-    currentTime = datetime.datetime.now()
-    diffTime = datetime.timedelta(hours = 5)
-    localTime = currentTime - diffTime
-    return ndb.Key('Resource', str(localTime))
+    return ndb.Key('Resource', DEFAULT_KEY)
     
 class Availability(ndb.Model):
     startTime = ndb.DateTimeProperty(auto_now_add=False)
@@ -29,6 +30,9 @@ class Resource(ndb.Model):
     owner = ndb.StringProperty(indexed=False)
     reservations = ndb.StructuredProperty(Reservations, repeated=True)
     id = ndb.StringProperty(indexed=True, required=True, default=str(uuid.uuid4()))
+    lastReservedTime = ndb.DateTimeProperty(auto_now_add=False)
+    startString = ndb.StringProperty(indexed=False)
+    endString = ndb.StringProperty(indexed=False)
     
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -51,10 +55,10 @@ class Add(webapp2.RequestHandler):
         error = None
         resourceName = self.request.get('nameInput')
         resourceTags = self.request.get('tagsInput')
-        startString = self.request.get('startInput')
-        endString = self.request.get('endInput')
-        resourceStart = datetime.datetime.strptime(startString, '%H:%M')
-        resourceEnd= datetime.datetime.strptime(endString, '%H:%M')
+        startInput = self.request.get('startInput')
+        endInput = self.request.get('endInput')
+        resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
+        resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
         if(resourceEnd <= resourceStart):
             error = "End time cannot be less than or equal to start time"
         
@@ -62,15 +66,16 @@ class Add(webapp2.RequestHandler):
             template_values = {
               'error': error,
               'resourceName': resourceName,
-              'startTime': startString,
+              'startTime': startInput,
               'endTime': '',
               'tags': resourceTags,
             }
             self.response.write(template.render(template_values))
             return
        
-        resource = Resource(parent = resource_key())
-        
+        resource = Resource(parent=resource_key())
+        resource.startString = startInput
+        resource.endString = endInput
         resource.availabiity = [Availability (startTime = resourceStart, endTime = resourceEnd)]        
         resource.name = resourceName
         resource.tags = resourceTags.split(",")
@@ -79,18 +84,29 @@ class Add(webapp2.RequestHandler):
         resource.id = str(uuid.uuid4())
         resource.put()
         
+        #Go back to the main page
+        self.redirect('/')
+        
+def getResources():
+    resources = Resource.query(ancestor=resource_key()).fetch()
+    return resources      
+            
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
         #Checks for active Google session
         user = users.get_current_user()
         if user:
+        
+            resources = getResources()
+            
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'Sign out'
             template_values = {
             'user': user,
             'url': url,
             'url_linktext': url_linktext,
+            'resources' : resources
             }
 
             template = JINJA_ENVIRONMENT.get_template('index.html')

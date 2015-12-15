@@ -2,7 +2,7 @@
 {% autoescape true %}
 <html>
   <head>
-    <title>Welcome</title>
+    <title>Reservation System</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">  
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -13,6 +13,36 @@
   <body>
     <h1>Hi, {{user}}</h1>
     
+    
+    <div class="container">
+    <h2>The following resources exist in the system:</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Resource Name</th>
+                <th>Availability</th>
+                <th>Tags</th>
+            </tr>
+        </thead>
+        {% if resources %}
+        {% for r in resources %}
+        <tbody>
+            <tr>
+                <td><a href="/resource?val={{r.name}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
+                <td>{{r.startString}} - {{r.endString}}</td>
+                <td>
+                    {% for t in r.tags %}
+                        <a href="/tag?val={{t}}">{{t}}</a><!--TODO : Add link to the tag page-->
+                    {%endfor%}
+                </td>
+            </tr>
+        </tbody>
+        {% endfor %}
+      {% endif %}
+    </table>
+    </div>
+    
+    <div class="container">
     <form action="/add" method="get">
       <div class="form-group">        
       <div class="col-sm-offset-2 col-sm-10">
@@ -20,8 +50,8 @@
       </div>
     </div>
     </form>
-    
-    <a class="button" href="{{ url|safe }}">{{ url_linktext }}</a>
+    </div>
+    <a class="btn btn-primary" role="button" href="{{ url|safe }}">{{ url_linktext }}</a>
 
   </body>
 </html>

@@ -47,14 +47,6 @@ function isFormValid()
         }
     }
     
-    if(disablSubmit == false){
-        if(tags === ''){
-            disablSubmit = true;
-        }
-    }
-    
-    
-    
     $('#addresource').prop('disabled', disablSubmit);
 }
 
