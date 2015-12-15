@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html lang="en">
+<head>
+  <title>Resource</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <link rel="stylesheet" rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+  <link rel="stylesheet" rel="stylesheet" href="/stylesheets/main.css" />
+  <script src="/js/jquery.min.js"></script>  
+  <script src="/js/bootstrap.min.js"></script>
+  <script src="/js/app.js"></script>
+
+</head>
+<body>
+
+<div class="container">
+  <h2>Reservations for {{name}} are as follows:</h2>
+  <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Reservor</th>
+                <th>Start Time</th>
+                <th>Duration</th>
+            </tr>
+        </thead>
+        {% if reservations %}
+        {% for r in reservations %}
+        <tbody>
+            <tr>
+                <td>{{r.reservor}}</td>
+                <td>{{r.startString}}</td>
+                <td>{{r.duration}}</td>
+            </tr>
+        </tbody>
+        {% endfor %}
+      {% endif %}
+    </table>
+ <h2>Total number of reservations for this resource are {{count}}</h2>
+</div>
+<div class="container" align = "center">
+<a href = "/editResource?val={{id}}"><input class="btn btn-lg btn-primary submit-button" id="editResource" style="width: 25%;" value="Edit Resource"></a>
+</div>
+</body>        
+</html>
+{% endautoescape %}

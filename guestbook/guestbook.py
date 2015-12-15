@@ -21,7 +21,7 @@ class Availability(ndb.Model):
     endTime = ndb.DateTimeProperty(auto_now_add=False)
 
 class Reservations(ndb.Model):
-    name = ndb.StringProperty(indexed=False)
+    owner = ndb.StringProperty(indexed=False)
     
 class Resource(ndb.Model):
     name = ndb.StringProperty(indexed=True)
@@ -93,8 +93,23 @@ def getResources():
 
 def getResourceByUser(user):
     resources = Resource.query(Resource.owner == user).fetch()
-    return resources    
-    
+    return resources  
+
+def getResourceById(id):
+    resources = Resource.query(Resource.id == id).fetch()
+    return resources      
+
+class ResourcePage(webapp2.RequestHandler):
+    def get(self):
+        id = self.request.get('val')
+        logging.info(id)
+        resource = getResourceById(id)
+        template = JINJA_ENVIRONMENT.get_template('resource.html')
+        template_values = {
+            'resource' : resource
+            }
+        self.response.write(template.render(template_values))
+        
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
@@ -123,4 +138,5 @@ class MainPage(webapp2.RequestHandler):
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/add', Add),
+    ('/resource', ResourcePage),
 ], debug=True)
