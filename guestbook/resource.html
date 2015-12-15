@@ -16,7 +16,7 @@
 <body>
 
 <div class="container">
-  <h2>Reservations for {{name}} are as follows:</h2>
+  <h2>Reservations for {{resource.name}} are as follows:</h2>
   <table class="table table-striped">
         <thead>
             <tr>
@@ -37,11 +37,26 @@
         {% endfor %}
       {% endif %}
     </table>
- <h2>Total number of reservations for this resource are {{count}}</h2>
+ <h2>Total number of reservations for this resource are {{resource.count}}</h2>
 </div>
-<div class="container" align = "center">
-<a href = "/editResource?val={{id}}"><input class="btn btn-lg btn-primary submit-button" id="editResource" style="width: 25%;" value="Edit Resource"></a>
+<div class="container" align = "center" id = "editDiv" name ="editDiv">
+<input type = "hidden" id = "owner" name = "owner" value = "{{ owner }}">
+<input type = "hidden" id = "currUser" name = "currUser" value = "{{ currUser }}">
+<a href = "/editResource?val={{resource.id}}" id="link" name = "link"><input class="btn btn-lg btn-primary submit-button" id="editResource" style="width: 25%;" value="Edit Resource"></a>
 </div>
+<script>
+    $(document).ready(function() {
+    var owner=$('#owner').val();
+    var currentUser = $("#currUser").val();
+    
+    if(owner === currentUser){
+        $('#editDiv').show();
+    }else{
+         $('#editDiv').hide();
+    }  
+});
+
+</script>
 </body>        
 </html>
 {% endautoescape %}

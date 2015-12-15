@@ -15,6 +15,18 @@ DEFAULT_KEY = "default_key"
 
 def resource_key():
     return ndb.Key('Resource', DEFAULT_KEY)
+
+def getResources():
+    resources = Resource.query(ancestor=resource_key()).fetch()
+    return resources      
+
+def getResourceByUser(user):
+    resources = Resource.query(Resource.owner == user).fetch()
+    return resources  
+
+def getResourceById(id):
+    resources = Resource.query(Resource.id == id).fetch()
+    return resources      
     
 class Availability(ndb.Model):
     startTime = ndb.DateTimeProperty(auto_now_add=False)
@@ -87,28 +99,66 @@ class Add(webapp2.RequestHandler):
         #Go back to the main page
         self.redirect('/')
         
-def getResources():
-    resources = Resource.query(ancestor=resource_key()).fetch()
-    return resources      
-
-def getResourceByUser(user):
-    resources = Resource.query(Resource.owner == user).fetch()
-    return resources  
-
-def getResourceById(id):
-    resources = Resource.query(Resource.id == id).fetch()
-    return resources      
 
 class ResourcePage(webapp2.RequestHandler):
     def get(self):
         id = self.request.get('val')
-        logging.info(id)
         resource = getResourceById(id)
         template = JINJA_ENVIRONMENT.get_template('resource.html')
         template_values = {
-            'resource' : resource
+            'resource' : resource[0],
+            'owner' : resource[0].owner,
+            'currUser' : users.get_current_user().email(),
             }
         self.response.write(template.render(template_values))
+
+class UpdateResource(webapp2.RequestHandler):
+    def post(self):
+        resourceName = self.request.get('nameInput')
+        resourceTags = self.request.get('tagsInput')
+        startInput = self.request.get('startInput')
+        endInput = self.request.get('endInput')
+        resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
+        resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
+        id = self.request.get('id')
+        
+        resource = getResourceById(id)
+        resource[0].startString = startInput
+        resource[0].endString = endInput
+        resource[0].availabiity = [Availability (startTime = resourceStart, endTime = resourceEnd)]        
+        resource[0].name = resourceName
+        resource[0].tags = resourceTags.split(",")
+        resource[0].owner = str(users.get_current_user().email())
+        resource[0].reservations = []
+        resource[0].id = id
+        resource[0].put()
+        
+        #Go back to the main page
+        self.redirect('/')
+    
+class EditResource(webapp2.RequestHandler):
+    def get(self):
+        id = self.request.get('val')
+        resource = getResourceById(id)
+        
+        currUser = users.get_current_user().email()
+        owner = resource[0].owner
+        
+        if(currUser != owner):
+            template_values = {
+                'error' : "You are not permitted to edit this resource"
+            }
+        else:  
+            template_values = {
+                'resourceName': resource[0].name,
+                'startTime': resource[0].startString,
+                'endTime': resource[0].endString,
+                'tags': ', '.join(resource[0].tags),
+                'uid' : resource[0].id,
+            }
+        template = JINJA_ENVIRONMENT.get_template('editResource.html')
+        self.response.write(template.render(template_values))
+        
         
 class MainPage(webapp2.RequestHandler):
 
@@ -139,4 +189,6 @@ app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/add', Add),
     ('/resource', ResourcePage),
+    ('/editResource', EditResource),
+    ('/update', UpdateResource),
 ], debug=True)
