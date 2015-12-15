@@ -28,7 +28,36 @@
         {% for r in resources %}
         <tbody>
             <tr>
-                <td><a href="/resource?val={{r.name}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
+                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
+                <td>{{r.startString}} - {{r.endString}}</td>
+                <td>
+                    {% for t in r.tags %}
+                        <a href="/tag?val={{t}}">{{t}}</a><!--TODO : Add link to the tag page-->
+                    {%endfor%}
+                </td>
+            </tr>
+        </tbody>
+        {% endfor %}
+      {% endif %}
+    </table>
+    </div>
+    
+    
+    <div class="container">
+    <h2>You own the following resources:</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Resource Name</th>
+                <th>Availability</th>
+                <th>Tags</th>
+            </tr>
+        </thead>
+        {% if userresources %}
+        {% for r in userresources %}
+        <tbody>
+            <tr>
+                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
                 <td>{{r.startString}} - {{r.endString}}</td>
                 <td>
                     {% for t in r.tags %}

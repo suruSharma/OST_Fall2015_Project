@@ -24,15 +24,15 @@ class Reservations(ndb.Model):
     name = ndb.StringProperty(indexed=False)
     
 class Resource(ndb.Model):
-    name = ndb.StringProperty(indexed=False)
+    name = ndb.StringProperty(indexed=True)
     availabiity = ndb.StructuredProperty(Availability, repeated=True)
-    tags = ndb.StringProperty(indexed=False,repeated=True)
-    owner = ndb.StringProperty(indexed=False)
+    tags = ndb.StringProperty(repeated=True)
+    owner = ndb.StringProperty()
     reservations = ndb.StructuredProperty(Reservations, repeated=True)
-    id = ndb.StringProperty(indexed=True, required=True, default=str(uuid.uuid4()))
+    id = ndb.StringProperty(indexed=True, required=True)
     lastReservedTime = ndb.DateTimeProperty(auto_now_add=False)
-    startString = ndb.StringProperty(indexed=False)
-    endString = ndb.StringProperty(indexed=False)
+    startString = ndb.StringProperty()
+    endString = ndb.StringProperty()
     
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -90,7 +90,11 @@ class Add(webapp2.RequestHandler):
 def getResources():
     resources = Resource.query(ancestor=resource_key()).fetch()
     return resources      
-            
+
+def getResourceByUser(user):
+    resources = Resource.query(Resource.owner == user).fetch()
+    return resources    
+    
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
@@ -99,6 +103,7 @@ class MainPage(webapp2.RequestHandler):
         if user:
         
             resources = getResources()
+            userResources = getResourceByUser(user.email())
             
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'Sign out'
@@ -106,7 +111,8 @@ class MainPage(webapp2.RequestHandler):
             'user': user,
             'url': url,
             'url_linktext': url_linktext,
-            'resources' : resources
+            'resources' : resources,
+            'userresources' : userResources
             }
 
             template = JINJA_ENVIRONMENT.get_template('index.html')
