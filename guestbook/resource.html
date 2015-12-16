@@ -2,7 +2,7 @@
 {% autoescape true %}
 <html lang="en">
 <head>
-  <title>Resource</title>
+  <title>Resource : {{resource.name}}</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
@@ -20,18 +20,27 @@
   <table class="table table-striped">
         <thead>
             <tr>
-                <th>Reservor</th>
-                <th>Start Time</th>
-                <th>Duration</th>
+                <th class="col-xs-3">Reservor</th>
+                <th class="col-xs-3">Start Time</th>
+                <th class="col-xs-3">Duration</th>
+                <th class="col-xs-3">Action</th>
             </tr>
         </thead>
         {% if reservations %}
         {% for r in reservations %}
         <tbody>
             <tr>
-                <td>{{r.reservor}}</td>
-                <td>{{r.startString}}</td>
+                <td>{{r.owner}}</td>
+                <td>{{r.strignStart}}</td>
                 <td>{{r.duration}}</td>
+                <td>
+                    {% if r.owner == currUser %}
+                        <form class="form-horizontal" id = "deleteResource" role="form" action="/deleteReservation?val={{r.uid}}" method="post">
+                            <input type="hidden" value = "{{resource.id}}" id = "resourceId" name = "resourceId">
+                            <input class="btn btn-link" id="deleteReservation" value="Delete" type="submit">
+                        </form>
+                    {% endif %}
+                </td>
             </tr>
         </tbody>
         {% endfor %}
@@ -42,17 +51,24 @@
 <div class="container" align = "center" id = "editDiv" name ="editDiv">
 <input type = "hidden" id = "owner" name = "owner" value = "{{ owner }}">
 <input type = "hidden" id = "currUser" name = "currUser" value = "{{ currUser }}">
-<a href = "/editResource?val={{resource.id}}" id="link" name = "link"><input class="btn btn-lg btn-primary submit-button" id="editResource" style="width: 25%;" value="Edit Resource"></a>
+<a href = "/" id="link" name = "link"><button type="button" class="btn btn-link" style="width: 15%;">Home</button></a>
+<a href = "/editResource?val={{resource.id}}" id="link" name = "link"><input class="btn btn-lg btn-primary submit-button" id="editResource" style="width: 15%;" value="Edit Resource"></a>
+<a href = "/addReservation?val={{resource.id}}" id="link" name = "link"><input class="btn btn-lg btn-primary submit-button" id="addReservation" style="width: 15%;" value="Add Reservation"></a>
+
 </div>
+
+
+</div>
+
 <script>
     $(document).ready(function() {
     var owner=$('#owner').val();
     var currentUser = $("#currUser").val();
     
     if(owner === currentUser){
-        $('#editDiv').show();
+        $('#editResource').show();
     }else{
-         $('#editDiv').hide();
+         $('#editResource').hide();
     }  
 });
 

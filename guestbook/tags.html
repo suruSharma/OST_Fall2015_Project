@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <title>Tag : {{tag}}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">  
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>  
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>    
+    <div class="container">
+    <h2>Resources tagged as {{tag}} are as follows :</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th class="col-xs-4">Resource Name</th>
+                <th class="col-xs-4">Availability</th>
+                <th class="col-xs-2">Owner</th>
+                <th class="col-xs-2">Tags</th>
+            </tr>
+        </thead>
+        {% if resources %}
+        {% for r in resources %}
+        <tbody>
+            <tr>
+                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
+                <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
+                <td>{{r.owner}}</td>
+                <td>
+                    {% for t in r.tags %}
+                        <a href="/tag?val={{t}}">{{t}}</a><!--TODO : Add link to the tag page-->
+                    {%endfor%}
+                </td>
+            </tr>
+        </tbody>
+        {% endfor %}
+      {% endif %}
+    </table>
+    </div>
+    <a href = "/" id="link" name = "link"><button type="button" class="btn btn-link" style="width: 15%;">Home</button></a>
+  </body>
+</html>
+{% endautoescape %}

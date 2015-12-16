@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html lang="en">
+<head>
+  <title>Add reservation</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <link rel="stylesheet" rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+  <link rel="stylesheet" rel="stylesheet" href="/stylesheets/main.css" />
+  <script src="/js/jquery.min.js"></script>  
+  <script src="/js/bootstrap.min.js"></script>
+  <script src="/js/addReservation.js"></script>
+
+</head>
+<body>
+
+<div class="container">
+  <h2>Add reservation details for {{ resourceName }}</h2>
+  <form class="form-horizontal" id = "addReservationForm" role="form" action="/reserve" method="post">
+    <div class="form-group">
+       <label class="control-label col-sm-2" for="availDate">Available date:</label>
+      <div class="col-sm-10">
+        <input type="text" value="{{ availDate }}" class="field left" readonly>
+        <input type="hidden" name = "id" id = "id" value = "{{id}}">
+      </div>
+    </div>
+    <div class="form-group">
+       <label class="control-label col-sm-2" for="start">Reservation Start Time:</label>
+      <div class="col-sm-10">
+        <input type="time" class="form-control" id="startInput" name="startInput" value = "{{ startTime }}">
+        <input type="hidden" class="form-control" id="actualStart" name="actualStart" value = "{{ startTime }}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label col-sm-2" for="end">Duration(in minutes):</label>
+      <div class="col-sm-10">
+        <input type="number" class="form-control" id="duration" name="duration" value = "{{ duration }}">
+        <input type="hidden" class="form-control" id="actualEnd" name="actualEnd" value = "{{ endTime }}">
+      </div>
+    </div>
+    <div class="container" align = "center">
+        <input class="btn btn-lg btn-primary submit-button" id="reserveResource" style="width: 25%;" value="Reserve" type="submit" disabled>
+    </div>
+    <a href = "/" id="link" name = "link"><button type="button" class="btn btn-link" style="width: 15%;">Home</button></a>
+  </form>
+  
+  <div class="container" id = "errorDiv" name = "errorDiv" hidden>
+    
+    <span class="label label-danger" id = "errorLabel" name = "errorLabel" hidden>The resource can be reserved only from {{startTime}} to {{endTime}}</span>
+  </div>
+</div>
+</body>        
+</html>
+{% endautoescape %}

@@ -15,3 +15,25 @@ indexes:
   properties:
   - name: date
     direction: desc
+
+- kind: Reservations
+  properties:
+  - name: resourceId
+  - name: startTime
+
+- kind: Reservations
+  ancestor: yes
+  properties:
+  - name: startTime
+
+- kind: Resource
+  properties:
+  - name: owner
+  - name: lastReservedTime
+    direction: desc
+
+- kind: Resource
+  ancestor: yes
+  properties:
+  - name: lastReservedTime
+    direction: desc
