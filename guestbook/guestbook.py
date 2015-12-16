@@ -32,8 +32,51 @@ def getResourceByUser(user):
 def getReservationsForUser(user):
     reservations_query = Reservations.query(ancestor=reservation_key(user))
     reservations = reservations_query.order(Reservations.startTime).fetch()
-    return reservations
+    return removeOldReservations(reservations)
 
+def removeOldReservations(reservations):
+    current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
+    finalReservations = []
+    
+    for r in reservations : 
+        rDate = r.date
+        end = getEndTime(r.strignStart, r.duration)
+        r_day = rDate.split("-")[2]
+        r_month = rDate.split("-")[1]
+        r_year = rDate.split("-")[0]
+        r_hour = end.hour
+        r_minutes = end.minute
+        endDate = datetime.datetime(int(r_year), int(r_month), int(r_day), int(r_hour), int(r_minutes))
+        if current_date > endDate :
+            continue
+        else:
+            finalReservations.append(r)
+            
+    finalReservations.sort(customSort)    
+    return finalReservations
+    
+def customSort(r1,r2):
+    rStart1 = r1.startTime
+    rDate1 = r1.date
+    r1_day = rDate1.split("-")[2]
+    r1_month = rDate1.split("-")[1]
+    r1_year = rDate1.split("-")[0]
+    rStart1 = rStart1.replace(day=int(r1_day), month=int(r1_month), year=int(r1_year))
+    
+    rStart2 = r2.startTime
+    rDate2 = r2.date
+    r2_day = rDate2.split("-")[2]
+    r2_month = rDate2.split("-")[1]
+    r2_year = rDate2.split("-")[0]
+    rStart2 = rStart2.replace(day=int(r2_day), month=int(r2_month), year=int(r2_year))
+    
+    if rStart1 > rStart2:
+        return 1
+    if rStart1 == rStart2:
+        return 0
+    if rStart1 < rStart2:
+        return -1
+    
 def deleteReservation(deleteId):
     reservations = Reservations.query(Reservations.uid == deleteId).fetch()
     for r in reservations:
@@ -60,24 +103,36 @@ def getResourcesByTag(tag):
 def getReservationsById(id):
     reservations_query = Reservations.query(Reservations.resourceId == id)
     reservations = reservations_query.order(Reservations.startTime).fetch()
-    return reservations
+    return removeOldReservations(reservations)
 
 def getEndTime(reservationInput, durationInput):
+    st = reservationInput.split(":")
     hh = int(durationInput) / 60
     mm = int(durationInput) % 60
-    st = reservationInput.split(":")
-    end = datetime.time(int(st[0])+hh, int(st[1])+mm, 0)
+
+    finalhh = int(st[0])+hh
+    finalmm = int(st[1])+mm
+    
+    if(finalmm > 60):
+        finalhh = (finalmm / 60) + finalhh
+        finalmm = finalmm % 60
+        
+    end = datetime.time(int(finalhh), int(finalmm), 0)
     return end
     
 def slotIsFree(reservationInput, durationInput, id):
     existingReservations = getReservationsById(id)
     
+    current = datetime.datetime.now() - datetime.timedelta(hours = 5)
+    currTime = datetime.time(int(current.hour), int(current.minute), int(current.second))    
+    
     st = reservationInput.split(":")
     rStart = datetime.time(int(st[0]), int(st[1]), 0)
     rEnd = getEndTime(reservationInput, durationInput)
-    logging.info(rStart)
-    logging.info(rEnd)
     
+    if(rEnd < currTime):
+        return False
+        
     for r in existingReservations:
         resverStart = r.startTime
         reservEnd = r.startTime + datetime.timedelta(minutes = r.duration)
@@ -105,6 +160,7 @@ class Reservations(ndb.Model):
     duration = ndb.IntegerProperty()
     strignStart = ndb.StringProperty()
     uid = ndb.StringProperty(indexed=True, required=True)
+    date = ndb.StringProperty()
     
 class Resource(ndb.Model):
     name = ndb.StringProperty(indexed=True)
@@ -181,11 +237,9 @@ class Add(webapp2.RequestHandler):
 
 class ResourcePage(webapp2.RequestHandler):
     def get(self):
-        logging.info("In get of ResourcePage")
         id = self.request.get('val')
         resource = getResourceById(id)
         reservations = getReservationsById(id)
-        logging.info("Size of existing resverations ="+str(len(reservations)))
         template = JINJA_ENVIRONMENT.get_template('resource.html')
         template_values = {
             'resource' : resource[0],
@@ -233,7 +287,6 @@ class Reserve(webapp2.RequestHandler):
         
         #Check if this is a valid time to reserve
         if(slotIsFree(startInput, durationInput, id)):
-            logging.info("Free to reserve")
             reservation = Reservations(parent=reservation_key(user))
             reservation.owner = user
             reservation.resourceId = id
@@ -242,6 +295,7 @@ class Reserve(webapp2.RequestHandler):
             reservation.resourceName = resource[0].name
             reservation.strignStart = startInput
             reservation.uid = str(uuid.uuid4())
+            reservation.date = resource[0].dateString
             reservation.put()
             
             #Update the count and last reserved time in the resource model
@@ -320,7 +374,6 @@ class AddReservation(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('addReservation.html')
         id = self.request.get('val')
         resource = getResourceById(id);
-        logging.info(id)
         template_values = {
             'id' : id,
             'availDate' : resource[0].dateString,
@@ -345,9 +398,7 @@ class UserPage(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
         
 class GenerateRSSFeed(webapp2.RequestHandler):
-    logging.info("Inside generate feed")
     def get(self):
-        logging.info("Inside get")
         id = self.request.get('val')
         resource = getResourceById(id)
         reservations = getReservationsById(id)
@@ -361,7 +412,7 @@ class GenerateRSSFeed(webapp2.RequestHandler):
         for r in reservations:
             rssFeed = rssFeed + "\t<item>\n"
             rssFeed = rssFeed + "\t\t<title>Reservation made by "+r.owner+"</title>\n"
-            rssFeed = rssFeed + "\t\t<link>/resource?val=)"+resource[0].id+"</link>\n"
+            rssFeed = rssFeed + "\t\t<link>/resource?val="+resource[0].id+"</link>\n"
             rssFeed = rssFeed + "\t\t<description>Reserved from "+r.strignStart+" for "+str(r.duration)+" minute/s</description>\n"
             rssFeed = rssFeed + "\t</item>\n"
         

@@ -33,14 +33,13 @@ function isFormValid()
     reserveStart.setMinutes(inputStartMin);
     reserveStart.setSeconds(0);
     
+    console.log("Reservation start time = "+reserveStart)
     var reserveEnd = new Date(reserveStart);
-    reserveEnd.setMinutes(reserveEnd.getMinutes() + duration);
+    //console.log("Reservation end time before adding minutes = "+reserveEnd)
+    reserveEnd.setMinutes(parseInt(reserveEnd.getMinutes()) + parseInt(duration));
     reserveEnd.setSeconds(0);
     
-    console.log(startDate);
-    console.log(endDate);
-    console.log(reserveStart);
-    console.log(reserveEnd);
+    console.log("Reservation end time before adding minutes = "+reserveEnd)
     
     if(startDate <= reserveStart && reserveStart < endDate && startDate < reserveEnd && reserveEnd <= endDate){
         if(reserveStart.toTimeString() === reserveEnd.toTimeString() || reserveEnd < reserveStart){
