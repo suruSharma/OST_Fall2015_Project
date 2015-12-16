@@ -11,10 +11,14 @@
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
-    <h1>Hi, {{user}}</h1>
+    {% if userPage == "yes" %}
+        <h1>Details for user {{user}}</h1>
+    {% else %}
+        <h1>Hi, {{user}}</h1>
+    {% endif %}
     
     <div class="container">
-    <h2>Your reservations are as follows:</h2>
+    <h2>{{user}}'s reservations:</h2>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -27,7 +31,7 @@
         {% for r in reservations %}
         <tbody>
             <tr>
-                <td><a href="/resource?val={{r.resourceId}}">{{r.resourceName}}</a></td><!--TODO : Add link to the resource page-->
+                <td><a href="/resource?val={{r.resourceId}}">{{r.resourceName}}</a></td>
                 <td>{{r.strignStart}}</td>
                 <td>{{r.duration}}</td>
             </tr>
@@ -36,38 +40,38 @@
       {% endif %}
     </table>
     </div>
+    {% if userPage == "no" %}
+        <div class="container">
+        <h2>The following resources exist in the system:</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th class="col-xs-4">Resource Name</th>
+                    <th class="col-xs-4">Availability</th>
+                    <th class="col-xs-4">Tags</th>
+                </tr>
+            </thead>
+            {% if resources %}
+            {% for r in resources %}
+            <tbody>
+                <tr>
+                    <td><a href="/resource?val={{r.id}}">{{r.name}}</a> <a href="rssfeed?val={{r.id}}"><img src = "/img/icon-rss.gif"></a></td>
+                    <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
+                    <td>
+                        {% for t in r.tags %}
+                            <a href="/tag?val={{t}}">{{t}}</a>
+                        {%endfor%}
+                    </td>
+                </tr>
+            </tbody>
+            {% endfor %}
+          {% endif %}
+        </table>
+        </div>  
+    {% endif %}
     
     <div class="container">
-    <h2>The following resources exist in the system:</h2>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th class="col-xs-4">Resource Name</th>
-                <th class="col-xs-4">Availability</th>
-                <th class="col-xs-4">Tags</th>
-            </tr>
-        </thead>
-        {% if resources %}
-        {% for r in resources %}
-        <tbody>
-            <tr>
-                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
-                <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
-                <td>
-                    {% for t in r.tags %}
-                        <a href="/tag?val={{t}}">{{t}}</a><!--TODO : Add link to the tag page-->
-                    {%endfor%}
-                </td>
-            </tr>
-        </tbody>
-        {% endfor %}
-      {% endif %}
-    </table>
-    </div>
-    
-    
-    <div class="container">
-    <h2>You own the following resources:</h2>
+    <h2>{{user}}'s resources:</h2>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -80,11 +84,11 @@
         {% for r in userresources %}
         <tbody>
             <tr>
-                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
+                <td><a href="/resource?val={{r.id}}">{{r.name}}</a> <a href="rssfeed?val={{r.id}}"><img src = "/img/icon-rss.gif"></a></td>
                 <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
                 <td>
                     {% for t in r.tags %}
-                        <a href="/tag?val={{t}}">{{t}}</a><!--TODO : Add link to the tag page-->
+                        <a href="/tag?val={{t}}">{{t}}</a>
                     {%endfor%}
                 </td>
             </tr>
@@ -94,17 +98,22 @@
     </table>
     </div>
     
-    <div class="container">
-    <form action="/add" method="get">
-      <div class="form-group">        
-      <div class="col-sm-offset-2 col-sm-10">
-        <button type="submit" class="btn btn-default">Add new resource</button>
-      </div>
-    </div>
-    </form>
-    </div>
-    <a class="btn btn-primary" role="button" href="{{ url|safe }}">{{ url_linktext }}</a>
-
+    {% if userPage == "no" %}
+        <div class="container">
+        <form action="/add" method="get">
+          <div class="form-group">        
+          <div class="col-sm-offset-2 col-sm-10">
+            <button type="submit" class="btn btn-default">Add new resource</button>
+          </div>
+        </div>
+        </form>
+        </div>
+        <a class="btn btn-primary" role="button" href="{{ url|safe }}">{{ url_linktext }}</a>
+    {% endif %}
+    
+    {% if userPage == "yes" %}
+        <a href = "/" id="link" name = "link"><button type="button" class="btn btn-link" style="width: 15%;">Home</button></a>
+    {% endif %}
   </body>
 </html>
 {% endautoescape %}

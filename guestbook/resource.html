@@ -30,14 +30,14 @@
         {% for r in reservations %}
         <tbody>
             <tr>
-                <td>{{r.owner}}</td>
+                <td><a href = "/ownerInfo?val={{r.owner}}">{{r.owner}}</a></td>
                 <td>{{r.strignStart}}</td>
                 <td>{{r.duration}}</td>
                 <td>
                     {% if r.owner == currUser %}
                         <form class="form-horizontal" id = "deleteResource" role="form" action="/deleteReservation?val={{r.uid}}" method="post">
                             <input type="hidden" value = "{{resource.id}}" id = "resourceId" name = "resourceId">
-                            <input class="btn btn-link" id="deleteReservation" value="Delete" type="submit">
+                            <input class="btn btn-default btn-xs" id="deleteReservation" value="Delete" type="submit">
                         </form>
                     {% endif %}
                 </td>

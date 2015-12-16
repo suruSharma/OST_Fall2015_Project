@@ -44,9 +44,12 @@
     </div>
     <a href = "/" id="link" name = "link"><button type="button" class="btn btn-link" style="width: 15%;">Home</button></a>
   </form>
-  
+  {% if error %}
+    <div class="container">
+    <span class="label label-danger">{{error}}</span>
+  </div>
+  {% endif %}
   <div class="container" id = "errorDiv" name = "errorDiv" hidden>
-    
     <span class="label label-danger" id = "errorLabel" name = "errorLabel" hidden>The resource can be reserved only from {{startTime}} to {{endTime}}</span>
   </div>
 </div>

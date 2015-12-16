@@ -28,7 +28,7 @@
             <tr>
                 <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
                 <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
-                <td>{{r.owner}}</td>
+                <td><a href = "/ownerInfo?val={{r.owner}}">{{r.owner}}</a></td>
                 <td>
                     {% for t in r.tags %}
                         <a href="/tag?val={{t}}">{{t}}</a><!--TODO : Add link to the tag page-->

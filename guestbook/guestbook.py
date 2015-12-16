@@ -38,6 +38,11 @@ def deleteReservation(deleteId):
     reservations = Reservations.query(Reservations.uid == deleteId).fetch()
     for r in reservations:
         r.key.delete()
+        
+def deleteReservationByResourceId(resourceId):
+    reservations = getReservationsById(resourceId)
+    for r in reservations:
+        r.key.delete()        
     
 def getResourceById(id):
     resources = Resource.query(Resource.id == id).fetch()
@@ -176,10 +181,11 @@ class Add(webapp2.RequestHandler):
 
 class ResourcePage(webapp2.RequestHandler):
     def get(self):
+        logging.info("In get of ResourcePage")
         id = self.request.get('val')
         resource = getResourceById(id)
         reservations = getReservationsById(id)
-        
+        logging.info("Size of existing resverations ="+str(len(reservations)))
         template = JINJA_ENVIRONMENT.get_template('resource.html')
         template_values = {
             'resource' : resource[0],
@@ -199,7 +205,7 @@ class UpdateResource(webapp2.RequestHandler):
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
         resourceDate = self.request.get('availDate')
         id = self.request.get('id')
-        
+        deleteReservationByResourceId(id)
         resource = getResourceById(id)
         resource[0].startString = startInput
         resource[0].endString = endInput
@@ -209,6 +215,7 @@ class UpdateResource(webapp2.RequestHandler):
         resource[0].owner = str(users.get_current_user().email())
         resource[0].id = id
         resource[0].dateString = resourceDate
+        resource[0].count = 0
         resource[0].put()
         
         #Go back to the main page
@@ -250,8 +257,16 @@ class Reserve(webapp2.RequestHandler):
             #Go back to the main page
             self.redirect('/')
         else:
-            logging.info("Cannot reserve")
-            #should write error back into same page
+            template = JINJA_ENVIRONMENT.get_template('addReservation.html')
+            template_values = {
+                'error' : "The selected duration is not available for this resource. Select another time slot.",
+                'id' : id,
+                'availDate' : resource[0].dateString,
+                'resourceName' : resource[0].name,
+                'startTime': resource[0].startString,
+                'endTime': resource[0].endString,
+            }
+            self.response.write(template.render(template_values))
 
         
 class EditResource(webapp2.RequestHandler):
@@ -298,7 +313,7 @@ class DeleteReservation(webapp2.RequestHandler):
         count = resource[0].count
         resource[0].count = count - 1
         resource[0].put()
-        self.redirect('/resource?val='+resourceId)
+        self.redirect('/')
         
 class AddReservation(webapp2.RequestHandler):
     def get(self):
@@ -312,6 +327,51 @@ class AddReservation(webapp2.RequestHandler):
             'resourceName' : resource[0].name,
             'startTime': resource[0].startString,
             'endTime': resource[0].endString,
+        }
+        self.response.write(template.render(template_values))
+
+class UserPage(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        userResources = getResourceByUser(user.email())
+        reservations = getReservationsForUser(user.email())
+        template_values = {
+            'user' : user,
+            'userPage' : "yes",
+            'userresources' : userResources,
+            'reservations' : reservations
+        }
+        template = JINJA_ENVIRONMENT.get_template('index.html')
+        self.response.write(template.render(template_values))
+        
+class GenerateRSSFeed(webapp2.RequestHandler):
+    logging.info("Inside generate feed")
+    def get(self):
+        logging.info("Inside get")
+        id = self.request.get('val')
+        resource = getResourceById(id)
+        reservations = getReservationsById(id)
+        rssFeed = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+        rssFeed = rssFeed + "<rss version=\"2.0\">\n\n"
+        rssFeed = rssFeed + "<channel>\n"
+        rssFeed = rssFeed + "\t<title>"+str(resource[0].name)+"</title>\n"
+        rssFeed = rssFeed + "\t<link>/resource?val="+resource[0].id+"</link>\n"
+        rssFeed = rssFeed + "\t<description>"+str(resource[0].name)+" is available on "+resource[0].dateString+" from "+resource[0].startString+" to "+resource[0].endString+"</description>\n"
+        
+        for r in reservations:
+            rssFeed = rssFeed + "\t<item>\n"
+            rssFeed = rssFeed + "\t\t<title>Reservation made by "+r.owner+"</title>\n"
+            rssFeed = rssFeed + "\t\t<link>/resource?val=)"+resource[0].id+"</link>\n"
+            rssFeed = rssFeed + "\t\t<description>Reserved from "+r.strignStart+" for "+str(r.duration)+" minute/s</description>\n"
+            rssFeed = rssFeed + "\t</item>\n"
+        
+        rssFeed = rssFeed + "</channel>\n"
+        rssFeed = rssFeed + "</rss>"
+        
+        template = JINJA_ENVIRONMENT.get_template('rssFeed.html')
+        template_values = {
+            'rssFeed' : rssFeed,
+            'name' : resource[0].name
         }
         self.response.write(template.render(template_values))
         
@@ -329,6 +389,7 @@ class MainPage(webapp2.RequestHandler):
             template_values = {
             'user': user,
             'url': url,
+            'userPage' : "no",
             'url_linktext': url_linktext,
             'resources' : resources,
             'userresources' : userResources,
@@ -349,6 +410,8 @@ app = webapp2.WSGIApplication([
     ('/addReservation', AddReservation),
     ('/reserve', Reserve),
     ('/tag', Tag),
-    ('/deleteReservation', DeleteReservation)
+    ('/deleteReservation', DeleteReservation),
+    ('/ownerInfo', UserPage),
+    ('/rssfeed', GenerateRSSFeed)
     
 ], debug=True)
