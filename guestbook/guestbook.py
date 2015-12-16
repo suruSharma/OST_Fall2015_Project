@@ -15,6 +15,11 @@ import webapp2
 DEFAULT_KEY = "default_key"
 DEFAULT_RESERVATION_KEY = "default_reservation_key"
 
+JINJA_ENVIRONMENT = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
+    extensions=['jinja2.ext.autoescape'],
+    autoescape=True)
+
 def resource_key():
     return ndb.Key('Resource', DEFAULT_KEY)
 
@@ -120,7 +125,7 @@ def getEndTime(reservationInput, durationInput):
     end = datetime.time(int(finalhh), int(finalmm), 0)
     return end
     
-def slotIsFree(reservationInput, durationInput, id):
+def slotIsFree(reservationInput, durationInput, id, dateString):
     existingReservations = getReservationsById(id)
     
     current = datetime.datetime.now() - datetime.timedelta(hours = 5)
@@ -130,7 +135,14 @@ def slotIsFree(reservationInput, durationInput, id):
     rStart = datetime.time(int(st[0]), int(st[1]), 0)
     rEnd = getEndTime(reservationInput, durationInput)
     
-    if(rEnd < currTime):
+    d = dateString.split("-")
+    actualEnd = current
+    actualEnd = actualEnd.replace(day=int(d[2]), month=int(d[1]), year=int(d[0]), hour = rEnd.hour, minute = rEnd.minute, second = 0)
+    actualStart = current
+    actualStart = actualStart.replace(day=int(d[2]), month=int(d[1]), year=int(d[0]), hour = int(st[0]), minute = int(st[1]), second = 0)
+    
+    if(actualEnd < current):
+        logging.info("Inside 1")
         return False
         
     for r in existingReservations:
@@ -140,14 +152,30 @@ def slotIsFree(reservationInput, durationInput, id):
         start = datetime.time(resverStart.hour, resverStart.minute, 0)
         end = datetime.time(reservEnd.hour, reservEnd.minute, 0)
         
-        if rStart == start:
+        reservationStart = actualStart
+        reservationStart = reservationStart.replace(hour = resverStart.hour, minute = resverStart.minute)
+
+        reservationEnd = actualStart
+        reservationEnd = reservationEnd.replace(hour = reservEnd.hour, minute = reservEnd.minute)
+        
+        if actualStart == reservationStart:
+            logging.info("Inside 2")
             return False
-        elif (rStart < start and rEnd > start) or (rStart > start and rStart < end):
+        elif (actualStart < reservationStart and actualEnd > reservationStart) or (actualStart > reservationStart and actualStart < reservationEnd):
+            logging.info("Inside 3")
             return False
         #compare the incoming reservation start time and reservation duration
         
     return True
-    
+
+def sendMail(resource, reservation):
+    mail.send_mail(sender="suruchi.sharma7389@gmail.com",
+                    to=reservation.owner,
+                    subject=resource.name+" is reserved for you",
+                    body = """
+                    Hi """+reservation.owner+"""
+                        You have reserved """ + resource.name + """ on """+reservation.date+"""from """+reservation.strignStart+"""for """+str(reservation.duration)+""" minute/s """)
+                    
 class Availability(ndb.Model):
     startTime = ndb.DateTimeProperty(auto_now_add=False)
     endTime = ndb.DateTimeProperty(auto_now_add=False)
@@ -174,10 +202,6 @@ class Resource(ndb.Model):
     dateString = ndb.StringProperty()
     count = ndb.IntegerProperty()
     
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
-    extensions=['jinja2.ext.autoescape'],
-    autoescape=True)
 
 class Add(webapp2.RequestHandler):
     def get(self):
@@ -278,6 +302,7 @@ class UpdateResource(webapp2.RequestHandler):
 class Reserve(webapp2.RequestHandler):
     def post(self):
         id = self.request.get('id')
+        dateString = self.request.get('dateString')
         startInput = self.request.get('startInput')
         durationInput = int(self.request.get('duration'))
         user = users.get_current_user().email()
@@ -286,7 +311,7 @@ class Reserve(webapp2.RequestHandler):
         resource = getResourceById(id)
         
         #Check if this is a valid time to reserve
-        if(slotIsFree(startInput, durationInput, id)):
+        if(slotIsFree(startInput, durationInput, id, dateString)):
             reservation = Reservations(parent=reservation_key(user))
             reservation.owner = user
             reservation.resourceId = id
@@ -306,7 +331,7 @@ class Reserve(webapp2.RequestHandler):
             
             resource[0].put()
             
-            #sendMail(user, resource[0].name)
+            sendMail(resource[0], reservation)
             #mail the user
             #Go back to the main page
             self.redirect('/')
