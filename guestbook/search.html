@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    <title>Search Results : {{rname}}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">  
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>  
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
+  </head>
+  <body>
+  <nav class="navbar navbar-right">
+  <div class="container">
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href='/'>HOME</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="jumbotron text-center">
+    <h1>Search results for resource name = {{rname}}</h1>          
+</div>
+
+ <div id="searchResources" class="container-fluid">   
+    <div class="container">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th class="col-xs-4">RESOURCE NAME</th>
+                <th class="col-xs-4">AVAILABILITY</th>
+                <th class="col-xs-4">TAGS</th>
+            </tr>
+        </thead>
+        {% if resources %}
+        {% for r in resources %}
+        <tbody>
+            <tr>
+                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td>
+                <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
+                <td>
+                    {% for t in r.tags %}
+                        <a href="/tag?val={{t}}">{{t}}</a>
+                    {%endfor%}
+                </td>
+            </tr>
+        </tbody>
+        {% endfor %}
+      {% endif %}
+    </table>
+    </div>
+    </div>
+  </body>
+</html>
+{% endautoescape %}

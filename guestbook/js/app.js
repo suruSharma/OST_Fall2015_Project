@@ -17,20 +17,17 @@ function isFormValid()
     var disablSubmit = false;
     
     if(name === ''){
-        console.log("name set to true");
         disablSubmit = true;
     }
     
     if(disablSubmit == false){
         if(startTime === ''){
-            console.log("starttime set to true");
             disablSubmit = true;
         }
     }
     
     if(disablSubmit == false){
         if(endTime === ''){
-            console.log("endTime set to true");
             disablSubmit = true;
         }
     }
@@ -50,11 +47,6 @@ function isFormValid()
         }
     }
     
-    console.log(name);
-    console.log(startTime);
-    console.log(endTime);
-    console.log(tags);
-    console.log(disablSubmit);
     
     $('#addresource').prop('disabled', disablSubmit);
 }

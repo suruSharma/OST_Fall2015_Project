@@ -96,6 +96,10 @@ def getResourceById(id):
     resources = Resource.query(Resource.id == id).fetch()
     return resources   
 
+def getResourcesByName(name):
+    resources = Resource.query(Resource.name == name).fetch()
+    return resources
+    
 def getResourcesByTag(tag):
     resources = getResources()
     result = []
@@ -450,7 +454,19 @@ class GenerateRSSFeed(webapp2.RequestHandler):
             'name' : resource[0].name
         }
         self.response.write(template.render(template_values))
+
+class Search(webapp2.RequestHandler):
+    def get(self):
+        rName = self.request.get('searchName')
+        resources = getResourcesByName(rName)
         
+        template = JINJA_ENVIRONMENT.get_template('search.html')
+        template_values = {
+            'resources' : resources,
+            'rname' : rName
+        }
+        self.response.write(template.render(template_values))
+    
 class MainPage(webapp2.RequestHandler):
 
     def get(self):
@@ -488,6 +504,7 @@ app = webapp2.WSGIApplication([
     ('/tag', Tag),
     ('/deleteReservation', DeleteReservation),
     ('/ownerInfo', UserPage),
-    ('/rssfeed', GenerateRSSFeed)
+    ('/rssfeed', GenerateRSSFeed),
+    ('/search', Search)
     
 ], debug=True)

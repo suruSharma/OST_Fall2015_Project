@@ -44,6 +44,18 @@
             <h1>Details of {{user}}</h1>
         {% else %}
             <h1>Hi {{user}}</h1>
+            <div id="formDiv" class="container">
+            <form class="form-horizontal" id="searchForm" role="form" action="/search" method="get">
+                <div class="form-group">
+                    <div class="col-sm-8">
+                       <input type="text" class="form-control" id="searchName" name = "searchName" placeholder="Resource Name" required>
+                    </div>
+                    <div class="col-sm-4">
+                       <span class="icon-input-btn"><span class="glyphicon glyphicon-search"></span> <input type="submit" class="btn btn-primary" value="SEARCH"></span>
+                    </div>
+                </div>
+            </form>
+            </div>
         {% endif %} 
     </div>
 
@@ -141,7 +153,6 @@
     </table>
     </div>
     </div>
-    
   </body>
 </html>
 {% endautoescape %}
