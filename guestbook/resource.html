@@ -14,9 +14,33 @@
 
 </head>
 <body>
+    <nav class="navbar navbar-right">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>                        
+      </button>
+      {% if userPage == "no" %}
+        <a class="navbar-brand" href="/add">Add resource</a>
+      {% endif %}
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href='/'>HOME</a></li>
+        <li><a href = "/editResource?val={{resource.id}}" id="editResource" name = "editResource">EDIT</a></li>
+        <li><a href = "/addReservation?val={{resource.id}}" id="link" name = "link">RESERVE</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
 
+<div class="jumbotron text-center">
+        <h1>Resource : {{resource.name}}</h1>
+        <p>Total number of reservations(including past ones): {{resource.count}}</p>
+</div>
 <div class="container">
-  <h2>Reservations for {{resource.name}} are as follows:</h2>
   <table class="table table-striped">
         <thead>
             <tr>
@@ -46,15 +70,11 @@
         {% endfor %}
       {% endif %}
     </table>
- <h2>Total number of reservations for this resource are {{resource.count}}</h2>
+ 
 </div>
 <div class="container" align = "center" id = "editDiv" name ="editDiv">
 <input type = "hidden" id = "owner" name = "owner" value = "{{ owner }}">
 <input type = "hidden" id = "currUser" name = "currUser" value = "{{ currUser }}">
-<a href = "/" id="link" name = "link"><button type="button" class="btn btn-link" style="width: 15%;">Home</button></a>
-<a href = "/editResource?val={{resource.id}}" id="link" name = "link"><input class="btn btn-lg btn-primary submit-button" id="editResource" style="width: 15%;" value="Edit Resource"></a>
-<a href = "/addReservation?val={{resource.id}}" id="link" name = "link"><input class="btn btn-lg btn-primary submit-button" id="addReservation" style="width: 15%;" value="Add Reservation"></a>
-
 </div>
 
 

@@ -10,28 +10,40 @@
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
   </head>
-  <body>    
+  <body> 
+ <nav class="navbar navbar-right">
+  <div class="container">
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href='/'>HOME</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="jumbotron text-center">
+        <h1>Tag : {{tag}}</h1>
+    </div>
+    
     <div class="container">
-    <h2>Resources tagged as {{tag}} are as follows :</h2>
     <table class="table table-striped">
         <thead>
             <tr>
-                <th class="col-xs-4">Resource Name</th>
-                <th class="col-xs-4">Availability</th>
-                <th class="col-xs-2">Owner</th>
-                <th class="col-xs-2">Tags</th>
+                <th class="col-xs-4">RESOURCE NAME</th>
+                <th class="col-xs-4">AVAILABILITY</th>
+                <th class="col-xs-2">OWNER</th>
+                <th class="col-xs-2">TAGS</th>
             </tr>
         </thead>
         {% if resources %}
         {% for r in resources %}
         <tbody>
             <tr>
-                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td><!--TODO : Add link to the resource page-->
+                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td>
                 <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
                 <td><a href = "/ownerInfo?val={{r.owner}}">{{r.owner}}</a></td>
                 <td>
                     {% for t in r.tags %}
-                        <a href="/tag?val={{t}}">{{t}}</a><!--TODO : Add link to the tag page-->
+                        <a href="/tag?val={{t}}">{{t}}</a>
                     {%endfor%}
                 </td>
             </tr>
@@ -40,7 +52,6 @@
       {% endif %}
     </table>
     </div>
-    <a href = "/" id="link" name = "link"><button type="button" class="btn btn-link" style="width: 15%;">Home</button></a>
   </body>
 </html>
 {% endautoescape %}

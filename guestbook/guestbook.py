@@ -169,12 +169,12 @@ def slotIsFree(reservationInput, durationInput, id, dateString):
     return True
 
 def sendMail(resource, reservation):
-    mail.send_mail(sender="suruchi.sharma7389@gmail.com",
+    mail.send_mail(sender="sss665@nyu.edu",
                     to=reservation.owner,
                     subject=resource.name+" is reserved for you",
                     body = """
                     Hi """+reservation.owner+"""
-                        You have reserved """ + resource.name + """ on """+reservation.date+"""from """+reservation.strignStart+"""for """+str(reservation.duration)+""" minute/s """)
+                        You have reserved """ + resource.name + """ on """+reservation.date+""" from """+reservation.strignStart+""" for """+str(reservation.duration)+""" minute/s """)
                     
 class Availability(ndb.Model):
     startTime = ndb.DateTimeProperty(auto_now_add=False)
@@ -410,9 +410,9 @@ class AddReservation(webapp2.RequestHandler):
 
 class UserPage(webapp2.RequestHandler):
     def get(self):
-        user = users.get_current_user()
-        userResources = getResourceByUser(user.email())
-        reservations = getReservationsForUser(user.email())
+        user = self.request.get('val')
+        userResources = getResourceByUser(user)
+        reservations = getReservationsForUser(user)
         template_values = {
             'user' : user,
             'userPage' : "yes",
@@ -461,7 +461,7 @@ class MainPage(webapp2.RequestHandler):
             userResources = getResourceByUser(user.email())
             reservations = getReservationsForUser(user.email())
             url = users.create_logout_url(self.request.uri)
-            url_linktext = 'Sign out'
+            url_linktext = 'SIGN OUT'
             template_values = {
             'user': user,
             'url': url,

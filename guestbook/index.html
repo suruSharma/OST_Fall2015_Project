@@ -11,20 +11,55 @@
     <link type="text/css" rel="stylesheet" href="/stylesheets/main.css" />
   </head>
   <body>
-    {% if userPage == "yes" %}
-        <h1>Details for user {{user}}</h1>
-    {% else %}
-        <h1>Hi, {{user}}</h1>
-    {% endif %}
-    
+  <nav class="navbar navbar-right">
+  <div class="container">
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href='/'>HOME</a></li>
+        {% if userPage == "yes" %}
+            <li><a href="#reservations">USER'S RESERVATIONS</a></li>
+        {% else %}
+            <li><a href="#reservations">MY RESERVATIONS</a></li>
+        {% endif %}
+        {% if userPage == "no" %}
+            <li><a href="#allResources">ALL RESOURCES</a></li>
+        {% endif %}
+        
+        {% if userPage == "yes" %}
+            <li><a href="#reservations">USER'S RESOURCES</a></li>
+        {% else %}
+            <li><a href="#userResources">MY RESOURCES</a></li>
+        {% endif %}
+        {% if userPage == "no" %}
+        <li><a href="/add">ADD RESOURCE</a></li>
+      {% endif %}
+        <li><a href="{{ url|safe }}">{{ url_linktext }}</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="jumbotron text-center">
+        {% if userPage == "yes" %}
+            <h1>Details of {{user}}</h1>
+        {% else %}
+            <h1>Hi {{user}}</h1>
+        {% endif %} 
+    </div>
+
+<div id="reservations" class="container-fluid">
     <div class="container">
-    <h2>{{user}}'s reservations:</h2>
+    {% if userPage == "yes" %}
+        <h2>USER'S RESERVATIONS</h2>
+    {% else %}
+         <h2>YOUR RESERVATIONS</h2>
+    {% endif %}
     <table class="table table-striped">
         <thead>
             <tr>
-                <th class="col-xs-4">Resource Name</th>
-                <th class="col-xs-4">Start Time</th>
-                <th class="col-xs-4">Duration(minutes)</th>
+                <th class="col-xs-4">RESOURCE NAME</th>
+                <th class="col-xs-4">START TIME</th>
+                <th class="col-xs-4">DURATION (IN MINUTES)</th>
             </tr>
         </thead>
         {% if reservations %}
@@ -40,15 +75,17 @@
       {% endif %}
     </table>
     </div>
+</div>
     {% if userPage == "no" %}
+    <div id="allResources" class="container-fluid">
         <div class="container">
-        <h2>The following resources exist in the system:</h2>
+        <h2>ALL RESOURCES</h2>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th class="col-xs-4">Resource Name</th>
-                    <th class="col-xs-4">Availability</th>
-                    <th class="col-xs-4">Tags</th>
+                    <th class="col-xs-4">RESOURCE NAME</th>
+                    <th class="col-xs-4">AVAILABILITY</th>
+                    <th class="col-xs-4">TAGS</th>
                 </tr>
             </thead>
             {% if resources %}
@@ -67,17 +104,23 @@
             {% endfor %}
           {% endif %}
         </table>
-        </div>  
+        </div> 
+</div>        
     {% endif %}
-    
+
+ <div id="userResources" class="container-fluid">   
     <div class="container">
-    <h2>{{user}}'s resources:</h2>
+    {% if userPage == "yes" %}
+        <h2>USER'S RESOURCES</h2>
+    {% else %}
+         <h2>YOUR RESOURCES</h2>
+    {% endif %}
     <table class="table table-striped">
         <thead>
             <tr>
-                <th class="col-xs-4">Resource Name</th>
-                <th class="col-xs-4">Availability</th>
-                <th class="col-xs-4">Tags</th>
+                <th class="col-xs-4">RESOURCE NAME</th>
+                <th class="col-xs-4">AVAILABILITY</th>
+                <th class="col-xs-4">TAGS</th>
             </tr>
         </thead>
         {% if userresources %}
@@ -97,23 +140,8 @@
       {% endif %}
     </table>
     </div>
+    </div>
     
-    {% if userPage == "no" %}
-        <div class="container">
-        <form action="/add" method="get">
-          <div class="form-group">        
-          <div class="col-sm-offset-2 col-sm-10">
-            <button type="submit" class="btn btn-default">Add new resource</button>
-          </div>
-        </div>
-        </form>
-        </div>
-        <a class="btn btn-primary" role="button" href="{{ url|safe }}">{{ url_linktext }}</a>
-    {% endif %}
-    
-    {% if userPage == "yes" %}
-        <a href = "/" id="link" name = "link"><button type="button" class="btn btn-link" style="width: 15%;">Home</button></a>
-    {% endif %}
   </body>
 </html>
 {% endautoescape %}
