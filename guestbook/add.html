@@ -2,7 +2,11 @@
 {% autoescape true %}
 <html lang="en">
 <head>
-  <title>Add Resource</title>
+    {% if image == "no" %}
+        <title>Add Resource</title>
+    {% else %}
+        <title>Add Image Resource</title>
+    {% endif %}
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
@@ -24,32 +28,55 @@
   </div>
 </nav>
 <div class="jumbotron text-center">
-        <h1>Add Resource</h1>
+        {% if image == "no" %}
+            <h1>Add Resource</h1>
+        {% else %}
+            <h1>Add Image Resource</h1>
+        {% endif %}
     </div>
 <div class="container">
-  <form class="form-horizontal" id = "addResourceForm" role="form" action="/add" method="post">
+    {% if image == "no" %}
+        <form class="form-horizontal" id = "addResourceForm" role="form" action="/add" method="post">
+    {% else %}
+        <form class="form-horizontal" id = "addResourceImageForm" role="form" action="/addImage" method="post" enctype="multipart/form-data">
+    {% endif %}
+    <input type = "hidden" id = "isImage" name = "isImage" value = "{{image}}">
     <div class="form-group">
       <label class="control-label col-sm-3" for="name">NAME OF THE RESOURCE</label>
       <div class="col-sm-9">
         <input type="text" class="form-control" id="nameInput" name = "nameInput" value="{{ resourceName }}" placeholder="Enter the name of the resource" required>
       </div>
     </div>
+    {% if image == "yes" %}
+    <div class="form-group">
+      <label class="control-label col-sm-3" for="name">DESCRIPTION</label>
+      <div class="col-sm-9">
+        <input type="text" class="form-control" id="descInput" name = "descInput" value="{{ description }}" placeholder="Enter some description for the image" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label col-sm-3" for="name">IMAGE LOCATION</label>
+      <div class="col-sm-9">
+        <input type="file" id="imageLocation" name = "imageLocation" value="{{ imageLocation }}"/>
+      </div>
+    </div>
+    {% endif %}
     <div class="form-group">
        <label class="control-label col-sm-3" for="availDate">AVAILABLE DATE</label>
       <div class="col-sm-9">
-        <input type="date" class="form-control" id="availDate" name="availDate" value = "{{ availDate }}">
+        <input type="date" class="form-control" id="availDate" name="availDate" value = "{{ availDate }}" required>
       </div>
     </div>
     <div class="form-group">
        <label class="control-label col-sm-3" for="start">AVAILABILITY START</label>
       <div class="col-sm-9">
-        <input type="time" class="form-control" id="startInput" name="startInput" value = "{{ startTime }}">
+        <input type="time" class="form-control" id="startInput" name="startInput" value = "{{ startTime }}" required>
       </div>
     </div>
     <div class="form-group">
       <label class="control-label col-sm-3" for="end">AVAILABILITY END</label>
       <div class="col-sm-9">
-        <input type="time" class="form-control" id="endInput" name="endInput" value = "{{ endTime }}">
+        <input type="time" class="form-control" id="endInput" name="endInput" value = "{{ endTime }}" required>
       </div>
     </div>
     <div class="form-group">
@@ -59,7 +86,11 @@
       </div>
     </div>
     <div class="container" align = "center">
+    {% if image == "no" %}
         <input class="btn btn-lg btn-primary submit-button" id="addresource" style="width: 25%;" value="ADD" type="submit" disabled>
+    {% else %}
+        <input class="btn btn-lg btn-primary submit-button" id="addresource" style="width: 25%;" value="ADD IMAGE RESOURCE" type="submit" disabled>
+    {% endif %}
     </div>
   </form>
 </div>

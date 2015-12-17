@@ -32,7 +32,11 @@
     Click <a href = "/">here</a> to go to the home page.
 {% else %}
 <div class="container">
-  <form class="form-horizontal" id = "addResourceForm" role="form" action="/update" method="post">
+  {% if image == "no" %}
+        <form class="form-horizontal" id = "addResourceForm" role="form" action="/update" method="post">
+    {% else %}
+        <form class="form-horizontal" id = "addResourceImageForm" role="form" action="/update" method="post" enctype="multipart/form-data">
+    {% endif %}
     <div class="form-group">
       <label class="control-label col-sm-3" for="name">NAME OF THE RESOURCE</label>
       <div class="col-sm-9">
@@ -40,6 +44,20 @@
         <input type = "hidden" id = "id" name = "id" value = "{{uid}}">
       </div>
     </div>
+    {% if image == "yes" %}
+    <div class="form-group">
+      <label class="control-label col-sm-3" for="name">DESCRIPTION</label>
+      <div class="col-sm-9">
+        <input type="text" class="form-control" id="descInput" name = "descInput" value="{{ description }}" placeholder="Enter some description for the image" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="control-label col-sm-3" for="name">IMAGE LOCATION</label>
+      <div class="col-sm-9">
+        <input type="file" id="imageLocation" name = "imageLocation"/>
+      </div>
+    </div>
+    {% endif %}
     <div class="form-group">
        <label class="control-label col-sm-3" for="availDate">AVAILABLE DATE</label>
       <div class="col-sm-9">

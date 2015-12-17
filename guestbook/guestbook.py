@@ -8,6 +8,7 @@ from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext import db
 from google.appengine.api import mail
+from google.appengine.api import images
 
 import jinja2
 import webapp2
@@ -23,6 +24,9 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 def resource_key():
     return ndb.Key('Resource', DEFAULT_KEY)
 
+def image_key(id):
+    return ndb.Key('Images', id)
+    
 def reservation_key(email):
     return ndb.Key('Reservations', email)
 
@@ -99,12 +103,19 @@ def getResourceById(id):
 def getResourcesByName(name):
     resources = Resource.query(Resource.name == name).fetch()
     return resources
+
+def getResourceImage(id):
+    resources = Resource.query(Resource.imageId == id).fetch()
+    return resources[0]
+
+def getFullImage(id):
+    image = Images.query(Images.imageId == id).fetch()
+    return image
     
 def getResourcesByTag(tag):
     resources = getResources()
     result = []
     for r in resources:
-        print r.tags
         if tag in r.tags:
             result.append(r)
     return result
@@ -146,7 +157,6 @@ def slotIsFree(reservationInput, durationInput, id, dateString):
     actualStart = actualStart.replace(day=int(d[2]), month=int(d[1]), year=int(d[0]), hour = int(st[0]), minute = int(st[1]), second = 0)
     
     if(actualEnd < current):
-        logging.info("Inside 1")
         return False
         
     for r in existingReservations:
@@ -163,10 +173,8 @@ def slotIsFree(reservationInput, durationInput, id, dateString):
         reservationEnd = reservationEnd.replace(hour = reservEnd.hour, minute = reservEnd.minute)
         
         if actualStart == reservationStart:
-            logging.info("Inside 2")
             return False
         elif (actualStart < reservationStart and actualEnd > reservationStart) or (actualStart > reservationStart and actualStart < reservationEnd):
-            logging.info("Inside 3")
             return False
         #compare the incoming reservation start time and reservation duration
         
@@ -193,6 +201,11 @@ class Reservations(ndb.Model):
     strignStart = ndb.StringProperty()
     uid = ndb.StringProperty(indexed=True, required=True)
     date = ndb.StringProperty()
+
+class Images(ndb.Model):
+    imageId = ndb.StringProperty(indexed=True, required=True)
+    fullImage = ndb.BlobProperty()
+    description = ndb.StringProperty()
     
 class Resource(ndb.Model):
     name = ndb.StringProperty(indexed=True)
@@ -204,14 +217,77 @@ class Resource(ndb.Model):
     startString = ndb.StringProperty()
     endString = ndb.StringProperty()
     dateString = ndb.StringProperty()
+    smallImg = ndb.BlobProperty()
+    imageId = ndb.StringProperty()
+    imageDescription = ndb.StringProperty()
     count = ndb.IntegerProperty()
+    image = ndb.BooleanProperty()
     
+class AddImage(webapp2.RequestHandler):
+    def get(self):
+        #will just print the empty form by calling add.html
+        template = JINJA_ENVIRONMENT.get_template('add.html')
+        template_values = {
+            'image' : "yes"
+        }
+        self.response.write(template.render(template_values))
+        
+    def post(self):
+        template = JINJA_ENVIRONMENT.get_template('add.html')
+        ##VALIDATIONS
+        #Check end time is not less than start time
+        error = None
+        resourceName = self.request.get('nameInput')
+        resourceTags = self.request.get('tagsInput')
+        startInput = self.request.get('startInput')
+        endInput = self.request.get('endInput')
+        dateInput = self.request.get('availDate')
+        description = self.request.get('descInput')
+        
+        img = self.request.get('imageLocation')
+        smallImg = images.resize(img, 32, 32)
+        resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
+        resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
+       
+        tags = resourceTags.split(",")
+        rt = []
+        for t in tags:
+            rt.append(t.strip())
 
+        imgId = str(uuid.uuid4())
+        image = Images(parent=image_key(imgId))
+        
+        image.imageId = imgId
+        image.fullImage = img
+        image.description = description
+        image.put()
+        
+        resource = Resource(parent=resource_key())
+        resource.startString = startInput
+        resource.endString = endInput
+        resource.availabiity = [Availability (startTime = resourceStart, endTime = resourceEnd)]        
+        resource.name = resourceName
+        resource.tags = rt
+        resource.owner = str(users.get_current_user().email())
+        resource.id = str(uuid.uuid4())
+        resource.dateString = dateInput
+        resource.count = 0
+        resource.smallImg = smallImg
+        resource.imageId = imgId
+        resource.imageDescription = description
+        resource.image = True
+        resource.put()
+        
+        #Go back to the main page
+        self.redirect('/')
+        
 class Add(webapp2.RequestHandler):
     def get(self):
         #will just print the empty form by calling add.html
         template = JINJA_ENVIRONMENT.get_template('add.html')
-        template_values = {}
+        template_values = {
+            'image' : "no"
+        }
         self.response.write(template.render(template_values))
     
     def post(self):
@@ -257,6 +333,7 @@ class Add(webapp2.RequestHandler):
         resource.id = str(uuid.uuid4())
         resource.dateString = dateInput
         resource.count = 0
+        resource.image = False
         resource.put()
         
         #Go back to the main page
@@ -286,16 +363,14 @@ class UpdateResource(webapp2.RequestHandler):
         resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
         resourceDate = self.request.get('availDate')
-        id = self.request.get('id')
-        deleteReservationByResourceId(id)
-        resource = getResourceById(id)
+        
         resource[0].startString = startInput
         resource[0].endString = endInput
         resource[0].availabiity = [Availability (startTime = resourceStart, endTime = resourceEnd)]        
         resource[0].name = resourceName
+        resource[0].id = id
         resource[0].tags = resourceTags.split(",")
         resource[0].owner = str(users.get_current_user().email())
-        resource[0].id = id
         resource[0].dateString = resourceDate
         resource[0].count = 0
         resource[0].put()
@@ -335,14 +410,15 @@ class Reserve(webapp2.RequestHandler):
             
             resource[0].put()
             
-            sendMail(resource[0], reservation)
             #mail the user
+            sendMail(resource[0], reservation)
+            
             #Go back to the main page
             self.redirect('/')
         else:
             template = JINJA_ENVIRONMENT.get_template('addReservation.html')
             template_values = {
-                'error' : "The selected duration is not available for this resource. Select another time slot.",
+                'error' : "Please select another duration. Either the time has passed or resource is already reserved at this time.",
                 'id' : id,
                 'availDate' : resource[0].dateString,
                 'resourceName' : resource[0].name,
@@ -365,6 +441,10 @@ class EditResource(webapp2.RequestHandler):
                 'error' : "You are not permitted to edit this resource"
             }
         else:  
+            if resource[0].image :
+                image = "yes"
+            else:
+                image = "no"
             template_values = {
                 'resourceName': resource[0].name,
                 'startTime': resource[0].startString,
@@ -372,10 +452,38 @@ class EditResource(webapp2.RequestHandler):
                 'tags': ', '.join(resource[0].tags),
                 'uid' : resource[0].id,
                 'availDate' : resource[0].dateString,
+                'image' : image,
+                'description' : resource[0].imageDescription
             }
         template = JINJA_ENVIRONMENT.get_template('editResource.html')
         self.response.write(template.render(template_values))
 
+class ImagePage(webapp2.RequestHandler):
+    def get(self):
+       imgId = self.request.get('imgId')
+       logging.info(imgId)
+       fullImage = getFullImage(imgId) 
+       template_values = {
+                'description': fullImage[0].description,
+                'imageId': imgId,
+            }
+       template = JINJA_ENVIRONMENT.get_template('image.html')
+       self.response.write(template.render(template_values)) 
+       
+class FullImage(webapp2.RequestHandler):
+    def get(self):
+        imgId = self.request.get('imgId')
+        fullImage = getFullImage(imgId)
+        self.response.headers['Content-Type'] = 'image/png'
+        self.response.out.write(fullImage[0].fullImage)
+        
+class SmallImage(webapp2.RequestHandler):
+    def get(self):
+        imgId = self.request.get('imgId')
+        resource = getResourceImage(imgId)
+        self.response.headers['Content-Type'] = 'image/png'
+        self.response.out.write(resource.smallImg)
+        
 class Tag(webapp2.RequestHandler):
     def get(self):
        tag = self.request.get('val')
@@ -505,6 +613,9 @@ app = webapp2.WSGIApplication([
     ('/deleteReservation', DeleteReservation),
     ('/ownerInfo', UserPage),
     ('/rssfeed', GenerateRSSFeed),
-    ('/search', Search)
-    
+    ('/search', Search),
+    ('/addImage', AddImage),
+    ('/smallImage', SmallImage),
+    ('/img', ImagePage),
+    ('/fullImage', FullImage),
 ], debug=True)

@@ -1,6 +1,6 @@
 $(document).ready(function() {
-    $("#startInput").bind("change paste", isFormValid);
-    $("#duration").bind("change paste", isFormValid);
+    $("#startInput").bind("change paste keyup", isFormValid);
+    $("#duration").bind("change paste keyup", isFormValid);
 });
  
 function isFormValid()

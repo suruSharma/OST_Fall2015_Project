@@ -32,6 +32,7 @@
         {% endif %}
         {% if userPage == "no" %}
         <li><a href="/add">ADD RESOURCE</a></li>
+        <li><a href="/addImage">ADD IMAGE RESOURCE</a></li>
       {% endif %}
         <li><a href="{{ url|safe }}">{{ url_linktext }}</a></li>
       </ul>
@@ -104,7 +105,14 @@
             {% for r in resources %}
             <tbody>
                 <tr>
-                    <td><a href="/resource?val={{r.id}}">{{r.name}}</a> <a href="rssfeed?val={{r.id}}"><img src = "/img/icon-rss.gif"></a></td>
+                    <td>
+                        {% if r.image %}
+                            <a href="/resource?val={{r.id}}">{{r.name}}</a><a href="/img?imgId={{r.imageId}}"><img src = "/smallImage?imgId={{r.imageId}}"></a> <a href="rssfeed?val={{r.id}}"><img src = "/img/icon-rss.gif"></a>
+                        {% else %}
+                            <a href="/resource?val={{r.id}}">{{r.name}}</a> <a href="rssfeed?val={{r.id}}"><img src = "/img/icon-rss.gif"></a>
+                        {% endif %}
+                    
+                </td>
                     <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
                     <td>
                         {% for t in r.tags %}
@@ -139,7 +147,14 @@
         {% for r in userresources %}
         <tbody>
             <tr>
-                <td><a href="/resource?val={{r.id}}">{{r.name}}</a> <a href="rssfeed?val={{r.id}}"><img src = "/img/icon-rss.gif"></a></td>
+                <td>
+                   {% if r.image %}
+                      <a href="/resource?val={{r.id}}">{{r.name}}</a><a href="/img?imgId={{r.imageId}}"><img src = "/smallImage?imgId={{r.imageId}}"></a> <a href="rssfeed?val={{r.id}}"><img src = "/img/icon-rss.gif"></a>
+                   {% else %}
+                        <a href="/resource?val={{r.id}}">{{r.name}}</a> <a href="rssfeed?val={{r.id}}"><img src = "/img/icon-rss.gif"></a>
+                   {% endif %}
+                    
+                </td>
                 <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
                 <td>
                     {% for t in r.tags %}
