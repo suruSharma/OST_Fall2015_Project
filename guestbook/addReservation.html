@@ -45,12 +45,12 @@
     <div class="form-group">
       <label class="control-label col-sm-3" for="end">DURATION(IN MINUTES)</label>
       <div class="col-sm-9">
-        <input type="number" class="form-control" id="duration" name="duration" value = "{{ duration }}">
+        <input type="number" class="form-control" id="duration" name="duration" value = "{{ duration }}" min=1>
         <input type="hidden" class="form-control" id="actualEnd" name="actualEnd" value = "{{ endTime }}">
       </div>
     </div>
     <div class="container" align = "center">
-        <input class="btn btn-lg btn-primary submit-button" id="reserveResource" style="width: 25%;" value="RESERVE" type="submit" disabled>
+        <input class="btn btn-lg btn-primary submit-button" id="reserveResource" style="width: 25%;" value="RESERVE" type="submit">
     </div>
   </form>
   {% if error %}

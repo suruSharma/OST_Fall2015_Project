@@ -39,7 +39,7 @@
     {% if image == "no" %}
         <form class="form-horizontal" id = "addResourceForm" role="form" action="/add" method="post">
     {% else %}
-        <form class="form-horizontal" id = "addResourceImageForm" role="form" action="/addImage" method="post" enctype="multipart/form-data">
+        <form class="form-horizontal" id = "addResourceImageForm" role="form" action="/add" method="post" enctype="multipart/form-data">
     {% endif %}
     <input type = "hidden" id = "isImage" name = "isImage" value = "{{image}}">
     <div class="form-group">

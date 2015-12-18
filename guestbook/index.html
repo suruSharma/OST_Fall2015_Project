@@ -70,9 +70,10 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th class="col-xs-4">RESOURCE NAME</th>
-                <th class="col-xs-4">START TIME</th>
-                <th class="col-xs-4">DURATION (IN MINUTES)</th>
+                <th class="col-xs-3">RESOURCE NAME</th>
+                <th class="col-xs-3">START TIME</th>
+                <th class="col-xs-3">DURATION (IN MINUTES)</th>
+                <th class="col-xs-3">DELETE</th>
             </tr>
         </thead>
         {% if reservations %}
@@ -82,6 +83,12 @@
                 <td><a href="/resource?val={{r.resourceId}}">{{r.resourceName}}</a></td>
                 <td>{{r.date}}, {{r.strignStart}}</td>
                 <td>{{r.duration}}</td>
+                <td>
+                    <form class="form-horizontal" id = "deleteResource" role="form" action="/deleteReservation?val={{r.uid}}" method="post">
+                            <input type="hidden" value = "{{r.resourceId}}" id = "resourceId" name = "resourceId">
+                            <input class="btn btn-default btn-xs" id="deleteReservation" value="Delete" type="submit">
+                        </form>
+                </td>
             </tr>
         </tbody>
         {% endfor %}

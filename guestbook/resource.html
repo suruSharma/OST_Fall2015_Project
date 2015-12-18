@@ -44,10 +44,9 @@
   <table class="table table-striped">
         <thead>
             <tr>
-                <th class="col-xs-3">Reservor</th>
-                <th class="col-xs-3">Start Time</th>
-                <th class="col-xs-3">Duration</th>
-                <th class="col-xs-3">Action</th>
+                <th class="col-xs-4">RESERVOR</th>
+                <th class="col-xs-4">START TIME</th>
+                <th class="col-xs-4">DURATION</th>
             </tr>
         </thead>
         {% if reservations %}
@@ -57,14 +56,6 @@
                 <td><a href = "/ownerInfo?val={{r.owner}}">{{r.owner}}</a></td>
                 <td>{{r.date}}, {{r.strignStart}}</td>
                 <td>{{r.duration}}</td>
-                <td>
-                    {% if r.owner == currUser %}
-                        <form class="form-horizontal" id = "deleteResource" role="form" action="/deleteReservation?val={{r.uid}}" method="post">
-                            <input type="hidden" value = "{{resource.id}}" id = "resourceId" name = "resourceId">
-                            <input class="btn btn-default btn-xs" id="deleteReservation" value="Delete" type="submit">
-                        </form>
-                    {% endif %}
-                </td>
             </tr>
         </tbody>
         {% endfor %}

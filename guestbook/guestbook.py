@@ -133,10 +133,12 @@ def getEndTime(reservationInput, durationInput):
     finalhh = int(st[0])+hh
     finalmm = int(st[1])+mm
     
-    if(finalmm > 60):
+    if(finalmm >= 60):
         finalhh = (finalmm / 60) + finalhh
         finalmm = finalmm % 60
-        
+    
+    logging.info(finalhh)
+    logging.info(finalmm)
     end = datetime.time(int(finalhh), int(finalmm), 0)
     return end
     
@@ -147,6 +149,8 @@ def slotIsFree(reservationInput, durationInput, id, dateString, capacity):
     
     st = reservationInput.split(":")
     rStart = datetime.time(int(st[0]), int(st[1]), 0)
+    
+    
     rEnd = getEndTime(reservationInput, durationInput)
     
     d = dateString.split("-")
@@ -237,81 +241,6 @@ class AddImage(webapp2.RequestHandler):
         }
         self.response.write(template.render(template_values))
         
-    def post(self):
-        template = JINJA_ENVIRONMENT.get_template('add.html')
-        ##VALIDATIONS
-        #Check end time is not less than start time
-        error = None
-        resourceName = self.request.get('nameInput')
-        resourceTags = self.request.get('tagsInput')
-        startInput = self.request.get('startInput')
-        endInput = self.request.get('endInput')
-        dateInput = self.request.get('availDate')
-        capacity = self.request.get('capacity')
-        description = self.request.get('descInput')
-        
-        
-        img = self.request.get('imageLocation')
-        smallImg = images.resize(img, 32, 32)
-        resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
-        resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
-        
-        dateSplit = dateInput.split("-")
-        resourceStart.replace(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]))
-        resourceEnd.replace(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]))
-        
-        current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
-        if(current_date > resourceEnd):
-            error = "The end time of this resource has already passed"
-        
-        if not(error is None):
-            template_values = {
-              'error': error,
-              'resourceName': resourceName,
-              'startTime': startInput,
-              'endTime': '',
-              'tags': resourceTags,
-              'capacity' : capacity,
-              'description' : description,
-              'image' : "yes",
-            }
-            self.response.write(template.render(template_values))
-            return
-        
-        resourceId = str(uuid.uuid4())
-        tags = resourceTags.split(",")
-        rt = []
-        for t in tags:
-            rt.append(t.strip())
-
-        imgId = str(uuid.uuid4())
-        image = Images(parent=image_key(resourceId))
-        
-        image.imageId = imgId
-        image.fullImage = img
-        image.description = description
-        image.put()
-        
-        resource = Resource(parent=resource_key())
-        resource.startString = startInput
-        resource.endString = endInput
-        resource.availabiity = [Availability (startTime = resourceStart, endTime = resourceEnd)]        
-        resource.name = resourceName
-        resource.tags = rt
-        resource.owner = str(users.get_current_user().email())
-        resource.id = resourceId
-        resource.dateString = dateInput
-        resource.count = 0
-        resource.smallImg = smallImg
-        resource.imageId = imgId
-        resource.imageDescription = description
-        resource.image = True
-        resource.capacity = int(capacity)
-        resource.put()
-        
-        #Go back to the main page
-        self.redirect('/')
-        
 class Add(webapp2.RequestHandler):
     def get(self):
         #will just print the empty form by calling add.html
@@ -341,9 +270,21 @@ class Add(webapp2.RequestHandler):
         dateSplit = dateInput.split("-")
         resourceStart=datetime.datetime(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]), hour=int(startInput.split(":")[0]), minute=int(startInput.split(":")[1]))
         
+        
         resourceEnd = datetime.datetime(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]), hour=int(endInput.split(":")[0]), minute=int(endInput.split(":")[1]))
+        
         current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
         
+        isImage = self.request.get('isImage')
+        if(isImage == "yes"):
+            description = self.request.get('descInput')    
+            img = self.request.get('imageLocation')
+            smallImg = images.resize(img, 32, 32)
+        
+        logging.info(dateSplit)
+        logging.info(current_date)
+        logging.info(resourceEnd)
+
         if(current_date > resourceEnd):
             error = "The end time of this resource has already passed"
         
@@ -353,8 +294,11 @@ class Add(webapp2.RequestHandler):
               'resourceName': resourceName,
               'tags': resourceTags,
               'capacity' : capacity,
-              'image' : "no",
+              'image' : isImage,
             }
+            if(isImage == "yes"):
+                template_values['description']=description
+                
             self.response.write(template.render(template_values))
             return
        
@@ -363,6 +307,16 @@ class Add(webapp2.RequestHandler):
         for t in tags:
             rt.append(t.strip())
             
+        resourceId = str(uuid.uuid4())
+        if(isImage == "yes"):
+            imgId = str(uuid.uuid4())
+            image = Images(parent=image_key(resourceId))
+        
+            image.imageId = imgId
+            image.fullImage = img
+            image.description = description
+            image.put()
+        
         resource = Resource(parent=resource_key())
         resource.startString = startInput
         resource.endString = endInput
@@ -370,10 +324,17 @@ class Add(webapp2.RequestHandler):
         resource.name = resourceName
         resource.tags = rt
         resource.owner = str(users.get_current_user().email())
-        resource.id = str(uuid.uuid4())
+        resource.id = resourceId
         resource.dateString = dateInput
         resource.count = 0
         resource.image = False
+        
+        if(isImage == "yes"):
+            resource.smallImg = smallImg
+            resource.imageId = imgId
+            resource.imageDescription = description
+            resource.image = True
+        
         resource.capacity = int(capacity)
         resource.put()
         
@@ -539,6 +500,7 @@ class AddReservation(webapp2.RequestHandler):
             'resourceName' : resource[0].name,
             'startTime': resource[0].startString,
             'endTime': resource[0].endString,
+            'duration':1
         }
         self.response.write(template.render(template_values))
 
