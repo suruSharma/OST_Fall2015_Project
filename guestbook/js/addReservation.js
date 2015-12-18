@@ -5,6 +5,8 @@ $(document).ready(function() {
  
 function isFormValid()
 {
+    $('#reservationId').prop('hidden',true);
+    
     var startTime = $("#startInput").val(); // 14:30
     var duration = $("#duration").val();
     var actualEnd = $("#actualEnd").val(); // 13:30
@@ -39,7 +41,6 @@ function isFormValid()
     reserveEnd.setMinutes(parseInt(reserveEnd.getMinutes()) + parseInt(duration));
     reserveEnd.setSeconds(0);
     
-    console.log("Reservation end time before adding minutes = "+reserveEnd)
     
     if(startDate <= reserveStart && reserveStart < endDate && startDate < reserveEnd && reserveEnd <= endDate){
         if(reserveStart.toTimeString() === reserveEnd.toTimeString() || reserveEnd < reserveStart){

@@ -7,6 +7,7 @@ $(document).ready(function() {
     $("#availDate").bind("change paste keyup", isFormValid);
     $("#descInput").bind("change paste keyup", isFormValid);
     $("#imageLocation").bind("change paste keyup", isFormValid);
+    $("#capacity").bind("change paste keyup", isFormValid);
 });
  
 function isFormValid()
@@ -16,6 +17,7 @@ function isFormValid()
     var endTime = $("#endInput").val();
     var tags = $("#tagsInput").val();
     var img = $("#isImage").val();
+    var capacity = $('#capacity').val();
     var disablSubmit = false;
     
     if(name === ''){
@@ -50,6 +52,12 @@ function isFormValid()
             disablSubmit = true;
             input.addClass("invalid");
         }else if(end[0] == start[0] && end[1] <= start[1]){
+            disablSubmit = true;
+        }
+    }
+    
+    if(disablSubmit == false){
+        if(capacity < 1){
             disablSubmit = true;
         }
     }

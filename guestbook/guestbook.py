@@ -140,7 +140,7 @@ def getEndTime(reservationInput, durationInput):
     end = datetime.time(int(finalhh), int(finalmm), 0)
     return end
     
-def slotIsFree(reservationInput, durationInput, id, dateString):
+def slotIsFree(reservationInput, durationInput, id, dateString, capacity):
     existingReservations = getReservationsById(id)
     
     current = datetime.datetime.now() - datetime.timedelta(hours = 5)
@@ -158,7 +158,8 @@ def slotIsFree(reservationInput, durationInput, id, dateString):
     
     if(actualEnd < current):
         return False
-        
+    
+    conflict = 0
     for r in existingReservations:
         resverStart = r.startTime
         reservEnd = r.startTime + datetime.timedelta(minutes = r.duration)
@@ -173,12 +174,15 @@ def slotIsFree(reservationInput, durationInput, id, dateString):
         reservationEnd = reservationEnd.replace(hour = reservEnd.hour, minute = reservEnd.minute)
         
         if actualStart == reservationStart:
-            return False
+            conflict = conflict + 1
         elif (actualStart < reservationStart and actualEnd > reservationStart) or (actualStart > reservationStart and actualStart < reservationEnd):
-            return False
+            conflict = conflict + 1
         #compare the incoming reservation start time and reservation duration
-        
-    return True
+    
+    if conflict < capacity:
+        return True
+    else:
+        return False
 
 def sendMail(resource, reservation):
     mail.send_mail(sender="sss665@nyu.edu",
@@ -222,13 +226,15 @@ class Resource(ndb.Model):
     imageDescription = ndb.StringProperty()
     count = ndb.IntegerProperty()
     image = ndb.BooleanProperty()
+    capacity = ndb.IntegerProperty()
     
 class AddImage(webapp2.RequestHandler):
     def get(self):
         #will just print the empty form by calling add.html
         template = JINJA_ENVIRONMENT.get_template('add.html')
         template_values = {
-            'image' : "yes"
+            'image' : "yes",
+            'capacity' : 1
         }
         self.response.write(template.render(template_values))
         
@@ -242,6 +248,7 @@ class AddImage(webapp2.RequestHandler):
         startInput = self.request.get('startInput')
         endInput = self.request.get('endInput')
         dateInput = self.request.get('availDate')
+        capacity = self.request.get('capacity')
         description = self.request.get('descInput')
         
         img = self.request.get('imageLocation')
@@ -276,6 +283,7 @@ class AddImage(webapp2.RequestHandler):
         resource.imageId = imgId
         resource.imageDescription = description
         resource.image = True
+        resource.capacity = int(capacity)
         resource.put()
         
         #Go back to the main page
@@ -286,7 +294,8 @@ class Add(webapp2.RequestHandler):
         #will just print the empty form by calling add.html
         template = JINJA_ENVIRONMENT.get_template('add.html')
         template_values = {
-            'image' : "no"
+            'image' : "no",
+            'capacity' : 1
         }
         self.response.write(template.render(template_values))
     
@@ -302,6 +311,7 @@ class Add(webapp2.RequestHandler):
         startInput = self.request.get('startInput')
         endInput = self.request.get('endInput')
         dateInput = self.request.get('availDate')
+        capacity = self.request.get('capacity')
         resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
         if(resourceEnd <= resourceStart):
@@ -334,6 +344,7 @@ class Add(webapp2.RequestHandler):
         resource.dateString = dateInput
         resource.count = 0
         resource.image = False
+        resource.capacity = int(capacity)
         resource.put()
         
         #Go back to the main page
@@ -354,106 +365,7 @@ class ResourcePage(webapp2.RequestHandler):
             }
         self.response.write(template.render(template_values))
 
-class UpdateResource(webapp2.RequestHandler):
-    def post(self):
-        resourceName = self.request.get('nameInput')
-        resourceTags = self.request.get('tagsInput')
-        startInput = self.request.get('startInput')
-        endInput = self.request.get('endInput')
-        resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
-        resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
-        resourceDate = self.request.get('availDate')
-        isImage = self.request.get('isImage') 
-        id = self.request.get('id')
-        resource = getResourceById(id)
-        
-        if isImage == "yes":
-            description = self.request.get('descInput')
-            img = self.request.get('imageLocation')
-            imgId = self.request.get('imageId')
-            
-            newImageId = str(uuid.uuid4())
-            
-            #delete the old image entry
-            oldImage = getFullImage(imgId)
-            oldImage[0].key.delete()
-            
-            newImage = Images(parent=image_key(id))
-            newImage.imageId = newImageId
-            newImage.fullImage = img
-            newImage.description = description
-            newImage.put()
-            
-            smallImg = images.resize(img, 32, 32)
-            resource[0].smallImg = smallImg
-            resource[0].imageId = newImageId
-            resource[0].imageDescription = description
-            resource[0].image = True
-            
-        resource[0].startString = startInput
-        resource[0].endString = endInput
-        resource[0].availabiity = [Availability (startTime = resourceStart, endTime = resourceEnd)]        
-        resource[0].name = resourceName
-        resource[0].id = id
-        resource[0].tags = resourceTags.split(",")
-        resource[0].owner = str(users.get_current_user().email())
-        resource[0].dateString = resourceDate
-        resource[0].count = 0
-        resource[0].put()
-        
-        #Go back to the main page
-        self.redirect('/')
 
-class Reserve(webapp2.RequestHandler):
-    def post(self):
-        id = self.request.get('id')
-        dateString = self.request.get('dateString')
-        startInput = self.request.get('startInput')
-        durationInput = int(self.request.get('duration'))
-        user = users.get_current_user().email()
-        reservationStart = datetime.datetime.strptime(startInput, '%H:%M')
-        
-        resource = getResourceById(id)
-        
-        #Check if this is a valid time to reserve
-        if(slotIsFree(startInput, durationInput, id, dateString)):
-            reservation = Reservations(parent=reservation_key(user))
-            reservation.owner = user
-            reservation.resourceId = id
-            reservation.startTime = reservationStart
-            reservation.duration = durationInput
-            reservation.resourceName = resource[0].name
-            reservation.strignStart = startInput
-            reservation.uid = str(uuid.uuid4())
-            reservation.date = resource[0].dateString
-            reservation.put()
-            
-            #Update the count and last reserved time in the resource model
-            
-            currCount = resource[0].count
-            resource[0].count = currCount + 1
-            resource[0].lastReservedTime = datetime.datetime.now() - datetime.timedelta(hours = 5)
-            
-            resource[0].put()
-            
-            #mail the user
-            sendMail(resource[0], reservation)
-            
-            #Go back to the main page
-            self.redirect('/')
-        else:
-            template = JINJA_ENVIRONMENT.get_template('addReservation.html')
-            template_values = {
-                'error' : "Please select another duration. Either the time has passed or resource is already reserved at this time.",
-                'id' : id,
-                'availDate' : resource[0].dateString,
-                'resourceName' : resource[0].name,
-                'startTime': resource[0].startString,
-                'endTime': resource[0].endString,
-            }
-            self.response.write(template.render(template_values))
-
-        
 class EditResource(webapp2.RequestHandler):
     def get(self):
         id = self.request.get('val')
@@ -480,11 +392,64 @@ class EditResource(webapp2.RequestHandler):
                 'availDate' : resource[0].dateString,
                 'image' : image,
                 'imageId' : resource[0].imageId,
-                'description' : resource[0].imageDescription
+                'description' : resource[0].imageDescription,
+                'capacity' : resource[0].capacity
             }
         template = JINJA_ENVIRONMENT.get_template('editResource.html')
         self.response.write(template.render(template_values))
 
+    def post(self):
+        resourceName = self.request.get('nameInput')
+        resourceTags = self.request.get('tagsInput')
+        startInput = self.request.get('startInput')
+        endInput = self.request.get('endInput')
+        resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
+        resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
+        resourceDate = self.request.get('availDate')
+        isImage = self.request.get('isImage')
+        capacity = self.request.get('capacity')
+        id = self.request.get('id')
+        resource = getResourceById(id)
+        
+        if isImage == "yes":
+            description = self.request.get('descInput')
+            img = self.request.get('imageLocation')
+            imgId = self.request.get('imageId')
+            
+            newImageId = str(uuid.uuid4())
+            
+            #delete the old image entry
+            oldImage = getFullImage(imgId)
+            oldImage[0].key.delete()
+            
+            newImage = Images(parent=image_key(id))
+            newImage.imageId = newImageId
+            newImage.fullImage = img
+            newImage.description = description
+            newImage.put()
+            
+            smallImg = images.resize(img, 32, 32)
+            resource[0].smallImg = smallImg
+            resource[0].imageId = newImageId
+            resource[0].imageDescription = description
+            resource[0].image = True
+        
+        deleteReservationByResourceId(id)
+        resource[0].startString = startInput
+        resource[0].endString = endInput
+        resource[0].availabiity = [Availability (startTime = resourceStart, endTime = resourceEnd)]        
+        resource[0].name = resourceName
+        resource[0].id = id
+        resource[0].tags = resourceTags.split(",")
+        resource[0].owner = str(users.get_current_user().email())
+        resource[0].dateString = resourceDate
+        resource[0].count = 0
+        resource[0].capacity = int(capacity)
+        resource[0].put()
+        
+        #Go back to the main page
+        self.redirect('/')
+        
 class ImagePage(webapp2.RequestHandler):
     def get(self):
        imgId = self.request.get('imgId')
@@ -546,6 +511,54 @@ class AddReservation(webapp2.RequestHandler):
             'endTime': resource[0].endString,
         }
         self.response.write(template.render(template_values))
+
+    def post(self):
+        id = self.request.get('id')
+        dateString = self.request.get('dateString')
+        startInput = self.request.get('startInput')
+        durationInput = int(self.request.get('duration'))
+        user = users.get_current_user().email()
+        reservationStart = datetime.datetime.strptime(startInput, '%H:%M')
+        
+        resource = getResourceById(id)
+        
+        #Check if this is a valid time to reserve
+        if(slotIsFree(startInput, durationInput, id, dateString,resource[0].capacity)):
+            reservation = Reservations(parent=reservation_key(user))
+            reservation.owner = user
+            reservation.resourceId = id
+            reservation.startTime = reservationStart
+            reservation.duration = durationInput
+            reservation.resourceName = resource[0].name
+            reservation.strignStart = startInput
+            reservation.uid = str(uuid.uuid4())
+            reservation.date = resource[0].dateString
+            reservation.put()
+            
+            #Update the count and last reserved time in the resource model
+            
+            currCount = resource[0].count
+            resource[0].count = currCount + 1
+            resource[0].lastReservedTime = datetime.datetime.now() - datetime.timedelta(hours = 5)
+            
+            resource[0].put()
+            
+            #mail the user
+            sendMail(resource[0], reservation)
+            
+            #Go back to the main page
+            self.redirect('/')
+        else:
+            template = JINJA_ENVIRONMENT.get_template('addReservation.html')
+            template_values = {
+                'error' : "Please select another duration. Either the time has passed or the resource has reached its reservation capacity",
+                'id' : id,
+                'availDate' : resource[0].dateString,
+                'resourceName' : resource[0].name,
+                'startTime': resource[0].startString,
+                'endTime': resource[0].endString,
+            }
+            self.response.write(template.render(template_values))
 
 class UserPage(webapp2.RequestHandler):
     def get(self):
@@ -614,7 +627,7 @@ class MainPage(webapp2.RequestHandler):
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'SIGN OUT'
             template_values = {
-            'user': user,
+            'user': user.nickname(),
             'url': url,
             'userPage' : "no",
             'url_linktext': url_linktext,
@@ -633,9 +646,7 @@ app = webapp2.WSGIApplication([
     ('/add', Add),
     ('/resource', ResourcePage),
     ('/editResource', EditResource),
-    ('/update', UpdateResource),
     ('/addReservation', AddReservation),
-    ('/reserve', Reserve),
     ('/tag', Tag),
     ('/deleteReservation', DeleteReservation),
     ('/ownerInfo', UserPage),

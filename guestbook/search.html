@@ -39,7 +39,11 @@
         {% for r in resources %}
         <tbody>
             <tr>
-                <td><a href="/resource?val={{r.id}}">{{r.name}}</a></td>
+                <td>{% if r.image %}
+                      <a href="/resource?val={{r.id}}">{{r.name}}</a> <a href="/img?imgId={{r.imageId}}"><img src = "/smallImage?imgId={{r.imageId}}"></a></a>
+                   {% else %}
+                        <a href="/resource?val={{r.id}}">{{r.name}}</a>
+                   {% endif %}</td>
                 <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
                 <td>
                     {% for t in r.tags %}
