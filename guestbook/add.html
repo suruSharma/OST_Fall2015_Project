@@ -99,6 +99,12 @@
         <input class="btn btn-lg btn-primary submit-button" id="addresource" style="width: 25%;" value="ADD IMAGE RESOURCE" type="submit" disabled>
     {% endif %}
     </div>
+    
+    {% if error %}
+    <div class="container" align="center" id = "errorDiv">
+        <h1><span class="label label-danger">{{error}}</span></h1>
+    </div>
+    {% endif %}
   </form>
 </div>
 <script>

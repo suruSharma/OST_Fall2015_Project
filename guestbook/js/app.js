@@ -12,6 +12,7 @@ $(document).ready(function() {
  
 function isFormValid()
 {
+    $('#errorDiv').prop('hidden',true)
     var name=$('#nameInput').val();
     var startTime = $("#startInput").val();
     var endTime = $("#endInput").val();
@@ -50,10 +51,10 @@ function isFormValid()
         
         if(end[0] < start[0]){
             disablSubmit = true;
-            input.addClass("invalid");
         }else if(end[0] == start[0] && end[1] <= start[1]){
             disablSubmit = true;
         }
+       
     }
     
     if(disablSubmit == false){

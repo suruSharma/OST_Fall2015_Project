@@ -143,8 +143,7 @@ def getEndTime(reservationInput, durationInput):
 def slotIsFree(reservationInput, durationInput, id, dateString, capacity):
     existingReservations = getReservationsById(id)
     
-    current = datetime.datetime.now() - datetime.timedelta(hours = 5)
-    currTime = datetime.time(int(current.hour), int(current.minute), int(current.second))    
+    current = datetime.datetime.now() - datetime.timedelta(hours = 5) 
     
     st = reservationInput.split(":")
     rStart = datetime.time(int(st[0]), int(st[1]), 0)
@@ -251,10 +250,34 @@ class AddImage(webapp2.RequestHandler):
         capacity = self.request.get('capacity')
         description = self.request.get('descInput')
         
+        
         img = self.request.get('imageLocation')
         smallImg = images.resize(img, 32, 32)
         resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
+        
+        dateSplit = dateInput.split("-")
+        resourceStart.replace(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]))
+        resourceEnd.replace(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]))
+        
+        current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
+        if(current_date > resourceEnd):
+            error = "The end time of this resource has already passed"
+        
+        if not(error is None):
+            template_values = {
+              'error': error,
+              'resourceName': resourceName,
+              'startTime': startInput,
+              'endTime': '',
+              'tags': resourceTags,
+              'capacity' : capacity,
+              'description' : description,
+              'image' : "yes",
+            }
+            self.response.write(template.render(template_values))
+            return
+        
         resourceId = str(uuid.uuid4())
         tags = resourceTags.split(",")
         rt = []
@@ -314,16 +337,23 @@ class Add(webapp2.RequestHandler):
         capacity = self.request.get('capacity')
         resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
-        if(resourceEnd <= resourceStart):
-            error = "End time cannot be less than or equal to start time"
+        
+        dateSplit = dateInput.split("-")
+        resourceStart=datetime.datetime(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]), hour=int(startInput.split(":")[0]), minute=int(startInput.split(":")[1]))
+        
+        resourceEnd = datetime.datetime(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]), hour=int(endInput.split(":")[0]), minute=int(endInput.split(":")[1]))
+        current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
+        
+        if(current_date > resourceEnd):
+            error = "The end time of this resource has already passed"
         
         if not(error is None):
             template_values = {
               'error': error,
               'resourceName': resourceName,
-              'startTime': startInput,
-              'endTime': '',
               'tags': resourceTags,
+              'capacity' : capacity,
+              'image' : "no",
             }
             self.response.write(template.render(template_values))
             return
