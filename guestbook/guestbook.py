@@ -327,6 +327,7 @@ class Add(webapp2.RequestHandler):
         resource.id = resourceId
         resource.dateString = dateInput
         resource.count = 0
+        resource.lastReservedTime = datetime.datetime.now() - datetime.timedelta(hours = 5)
         resource.image = False
         
         if(isImage == "yes"):
@@ -549,6 +550,7 @@ class AddReservation(webapp2.RequestHandler):
                 'resourceName' : resource[0].name,
                 'startTime': resource[0].startString,
                 'endTime': resource[0].endString,
+                'duration': 1,
             }
             self.response.write(template.render(template_values))
 
