@@ -1,4 +1,0 @@
-cron:
-- description: sendMailToUser
-  url: /sendMail
-  schedule: every 1 minutes

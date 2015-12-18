@@ -197,29 +197,7 @@ def sendReservedMail(reservation):
                     subject=reservation.resourceName+" is reserved for you",
                     body = """Hi """+reservation.owner+"""
                         You have reserved """ + reservation.resourceName + """ on """+reservation.date+""" from """+reservation.strignStart+""" for """+str(reservation.duration)+""" minute/s """)
-                        
-def sendReservationStartMail(reservation):
-    mail.send_mail(sender="sss665@nyu.edu",
-                    to=reservation.owner,
-                    subject="Your reservation for "+reservation.resourceName+" has begun",
-                    body = """Hi """+reservation.owner+"""
-                        Your reservation for """+reservation.resourceName+""" has begun.""")                        
-
-class SendMailToReservor(webapp2.RequestHandler):
-    def get(self):
-        logging.info("Inside send mail to reservor")
-        reservations = getAllReservations()
-        current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
-        logging.info("Current date is = "+str(current_date))
-        for r in reservations:
-            rservationStart = r.startTime - datetime.timedelta(hours = 5)
-            logging.info("Reservation start time ="+str(rservationStart))
-            if str(current_date.date()) == str(rservationStart.date()) and str(current_date.hour) == str(rservationStart.hour) and current_date.minute == rservationStart.minute:
-                logging.info("Sending mail to reservor")
-                resource = getResourceById(r.resourceId)
-                sendReservationStartMail(r)
-                
-            
+                                    
 class Availability(ndb.Model):
     startTime = ndb.DateTimeProperty(auto_now_add=False)
     endTime = ndb.DateTimeProperty(auto_now_add=False)
@@ -683,5 +661,4 @@ app = webapp2.WSGIApplication([
     ('/smallImage', SmallImage),
     ('/img', ImagePage),
     ('/fullImage', FullImage),
-    ('/sendMail', SendMailToReservor)
 ], debug=True)
