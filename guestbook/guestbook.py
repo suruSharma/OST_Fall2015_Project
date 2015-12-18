@@ -248,14 +248,14 @@ class AddImage(webapp2.RequestHandler):
         smallImg = images.resize(img, 32, 32)
         resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
-       
+        resourceId = str(uuid.uuid4())
         tags = resourceTags.split(",")
         rt = []
         for t in tags:
             rt.append(t.strip())
 
         imgId = str(uuid.uuid4())
-        image = Images(parent=image_key(imgId))
+        image = Images(parent=image_key(resourceId))
         
         image.imageId = imgId
         image.fullImage = img
@@ -269,7 +269,7 @@ class AddImage(webapp2.RequestHandler):
         resource.name = resourceName
         resource.tags = rt
         resource.owner = str(users.get_current_user().email())
-        resource.id = str(uuid.uuid4())
+        resource.id = resourceId
         resource.dateString = dateInput
         resource.count = 0
         resource.smallImg = smallImg
@@ -363,7 +363,33 @@ class UpdateResource(webapp2.RequestHandler):
         resourceStart = datetime.datetime.strptime(startInput, '%H:%M')
         resourceEnd= datetime.datetime.strptime(endInput, '%H:%M')
         resourceDate = self.request.get('availDate')
+        isImage = self.request.get('isImage') 
+        id = self.request.get('id')
+        resource = getResourceById(id)
         
+        if isImage == "yes":
+            description = self.request.get('descInput')
+            img = self.request.get('imageLocation')
+            imgId = self.request.get('imageId')
+            
+            newImageId = str(uuid.uuid4())
+            
+            #delete the old image entry
+            oldImage = getFullImage(imgId)
+            oldImage[0].key.delete()
+            
+            newImage = Images(parent=image_key(id))
+            newImage.imageId = newImageId
+            newImage.fullImage = img
+            newImage.description = description
+            newImage.put()
+            
+            smallImg = images.resize(img, 32, 32)
+            resource[0].smallImg = smallImg
+            resource[0].imageId = newImageId
+            resource[0].imageDescription = description
+            resource[0].image = True
+            
         resource[0].startString = startInput
         resource[0].endString = endInput
         resource[0].availabiity = [Availability (startTime = resourceStart, endTime = resourceEnd)]        
@@ -386,7 +412,7 @@ class Reserve(webapp2.RequestHandler):
         durationInput = int(self.request.get('duration'))
         user = users.get_current_user().email()
         reservationStart = datetime.datetime.strptime(startInput, '%H:%M')
-         
+        
         resource = getResourceById(id)
         
         #Check if this is a valid time to reserve
@@ -453,6 +479,7 @@ class EditResource(webapp2.RequestHandler):
                 'uid' : resource[0].id,
                 'availDate' : resource[0].dateString,
                 'image' : image,
+                'imageId' : resource[0].imageId,
                 'description' : resource[0].imageDescription
             }
         template = JINJA_ENVIRONMENT.get_template('editResource.html')

@@ -32,6 +32,7 @@
             <h1>Add Resource</h1>
         {% else %}
             <h1>Add Image Resource</h1>
+            <h2><span class="label label-warning">Please select images less than 1MB</span></h2>
         {% endif %}
     </div>
 <div class="container">
@@ -57,7 +58,7 @@
     <div class="form-group">
       <label class="control-label col-sm-3" for="name">IMAGE LOCATION</label>
       <div class="col-sm-9">
-        <input type="file" id="imageLocation" name = "imageLocation" value="{{ imageLocation }}"/>
+        <input type="file" id="imageLocation" name = "imageLocation" value="{{ imageLocation }}" required/>
       </div>
     </div>
     {% endif %}

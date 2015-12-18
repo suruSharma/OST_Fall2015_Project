@@ -25,6 +25,9 @@
 </nav>
 <div class="jumbotron text-center">
         <h1>Edit Resource</h1>
+        {% if image == "yes" %}
+            <h2><span class="label label-warning">Please select images less than 1MB</span></h2>
+        {% endif %}
     </div>
     
 {% if error %}
@@ -49,12 +52,14 @@
       <label class="control-label col-sm-3" for="name">DESCRIPTION</label>
       <div class="col-sm-9">
         <input type="text" class="form-control" id="descInput" name = "descInput" value="{{ description }}" placeholder="Enter some description for the image" required>
+        <input type="hidden" id="isImage" name="isImage" value = "{{image}}">
+        <input type="hidden" id="imageId" name="imageId" value = "{{imageId}}"
       </div>
     </div>
     <div class="form-group">
       <label class="control-label col-sm-3" for="name">IMAGE LOCATION</label>
       <div class="col-sm-9">
-        <input type="file" id="imageLocation" name = "imageLocation"/>
+       <input type="file" id="imageLocation" name = "imageLocation" value="{{ imageLocation }}" required/>
       </div>
     </div>
     {% endif %}
