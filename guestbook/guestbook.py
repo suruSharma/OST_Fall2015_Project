@@ -46,8 +46,7 @@ def getReservationsForUser(user):
 def removeOldReservations(reservations):
     current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
     finalReservations = []
-    
-    for r in reservations : 
+    for r in reservations: 
         rDate = r.date
         end = getEndTime(r.strignStart, r.duration)
         r_day = rDate.split("-")[2]
@@ -119,6 +118,11 @@ def getResourcesByTag(tag):
         if tag in r.tags:
             result.append(r)
     return result
+
+def getAllReservations():
+    reservations_query = Reservations.query()
+    reservations = reservations_query.order(Reservations.startTime).fetch()
+    return removeOldReservations(reservations)
     
 def getReservationsById(id):
     reservations_query = Reservations.query(Reservations.resourceId == id)
@@ -187,14 +191,35 @@ def slotIsFree(reservationInput, durationInput, id, dateString, capacity):
     else:
         return False
 
-def sendMail(resource, reservation):
+def sendReservedMail(reservation):
     mail.send_mail(sender="sss665@nyu.edu",
                     to=reservation.owner,
-                    subject=resource.name+" is reserved for you",
-                    body = """
-                    Hi """+reservation.owner+"""
-                        You have reserved """ + resource.name + """ on """+reservation.date+""" from """+reservation.strignStart+""" for """+str(reservation.duration)+""" minute/s """)
-                    
+                    subject=reservation.resourceName+" is reserved for you",
+                    body = """Hi """+reservation.owner+"""
+                        You have reserved """ + reservation.resourceName + """ on """+reservation.date+""" from """+reservation.strignStart+""" for """+str(reservation.duration)+""" minute/s """)
+                        
+def sendReservationStartMail(reservation):
+    mail.send_mail(sender="sss665@nyu.edu",
+                    to=reservation.owner,
+                    subject="Your reservation for "+reservation.resourceName+" has begun",
+                    body = """Hi """+reservation.owner+"""
+                        Your reservation for """+reservation.resourceName+""" has begun.""")                        
+
+class SendMailToReservor(webapp2.RequestHandler):
+    def get(self):
+        logging.info("Inside send mail to reservor")
+        reservations = getAllReservations()
+        current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
+        logging.info("Current date is = "+str(current_date))
+        for r in reservations:
+            rservationStart = r.startTime - datetime.timedelta(hours = 5)
+            logging.info("Reservation start time ="+str(rservationStart))
+            if str(current_date.date()) == str(rservationStart.date()) and str(current_date.hour) == str(rservationStart.hour) and current_date.minute == rservationStart.minute:
+                logging.info("Sending mail to reservor")
+                resource = getResourceById(r.resourceId)
+                sendReservationStartMail(r)
+                
+            
 class Availability(ndb.Model):
     startTime = ndb.DateTimeProperty(auto_now_add=False)
     endTime = ndb.DateTimeProperty(auto_now_add=False)
@@ -270,9 +295,9 @@ class Add(webapp2.RequestHandler):
         dateSplit = dateInput.split("-")
         resourceStart=datetime.datetime(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]), hour=int(startInput.split(":")[0]), minute=int(startInput.split(":")[1]))
         
-        
         resourceEnd = datetime.datetime(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]), hour=int(endInput.split(":")[0]), minute=int(endInput.split(":")[1]))
         
+
         current_date = datetime.datetime.now() - datetime.timedelta(hours = 5)
         
         isImage = self.request.get('isImage')
@@ -281,9 +306,8 @@ class Add(webapp2.RequestHandler):
             img = self.request.get('imageLocation')
             smallImg = images.resize(img, 32, 32)
         
-        logging.info(dateSplit)
-        logging.info(current_date)
-        logging.info(resourceEnd)
+        logging.info("Current Date = "+str(current_date))
+        logging.info("Resource End Date = "+str(resourceEnd))
 
         if(current_date > resourceEnd):
             error = "The end time of this resource has already passed"
@@ -512,6 +536,10 @@ class AddReservation(webapp2.RequestHandler):
         user = users.get_current_user().email()
         reservationStart = datetime.datetime.strptime(startInput, '%H:%M')
         
+        dateSplit = dateString.split("-")
+        
+        reservationStart=datetime.datetime(year=int(dateSplit[0]), month=int(dateSplit[1]), day=int(dateSplit[2]), hour=int(startInput.split(":")[0]), minute=int(startInput.split(":")[1]))
+        reservationStart = reservationStart + datetime.timedelta(hours = 5)
         resource = getResourceById(id)
         
         #Check if this is a valid time to reserve
@@ -531,12 +559,12 @@ class AddReservation(webapp2.RequestHandler):
             
             currCount = resource[0].count
             resource[0].count = currCount + 1
-            resource[0].lastReservedTime = datetime.datetime.now() - datetime.timedelta(hours = 5)
+            resource[0].lastReservedTime = datetime.datetime.now()
             
             resource[0].put()
             
             #mail the user
-            sendMail(resource[0], reservation)
+            sendReservedMail(reservation)
             
             #Go back to the main page
             self.redirect('/')
@@ -553,6 +581,8 @@ class AddReservation(webapp2.RequestHandler):
             }
             self.response.write(template.render(template_values))
 
+
+    
 class UserPage(webapp2.RequestHandler):
     def get(self):
         user = self.request.get('val')
@@ -576,7 +606,7 @@ class GenerateRSSFeed(webapp2.RequestHandler):
         rssFeed = rssFeed + "<rss version=\"2.0\">\n\n"
         rssFeed = rssFeed + "<channel>\n"
         rssFeed = rssFeed + "\t<title>"+str(resource[0].name)+"</title>\n"
-        rssFeed = rssFeed + "\t<link>/resource?val="+resource[0].id+"</link>\n"
+        rssFeed = rssFeed + "\t<link>http://sss665-reservationsystem.appspot.com/resource?val="+resource[0].id+"</link>\n"
         rssFeed = rssFeed + "\t<description>"+str(resource[0].name)+" is available on "+resource[0].dateString+" from "+resource[0].startString+" to "+resource[0].endString
         if resource[0].image:
             rssFeed = rssFeed + "\n\t\tLink to resource image : http://sss665-reservationsystem.appspot.com/img?imgId="+resource[0].imageId+"\n\t"
@@ -586,8 +616,8 @@ class GenerateRSSFeed(webapp2.RequestHandler):
         for r in reservations:
             rssFeed = rssFeed + "\t<item>\n"
             rssFeed = rssFeed + "\t\t<title>Reservation made by "+r.owner+"</title>\n"
-            rssFeed = rssFeed + "\t\t<link>/resource?val="+resource[0].id+"</link>\n"
-            rssFeed = rssFeed + "\t\t<description>Reserved from "+r.strignStart+" for "+str(r.duration)+" minute/s</description>\n"
+            rssFeed = rssFeed + "\t\t<link>http://sss665-reservationsystem.appspot.com/resource?val="+resource[0].id+"</link>\n"
+            rssFeed = rssFeed + "\t\t<description>Reserved from "+r.strignStart+" for "+str(r.duration)+" minute/s on "+str(r.date)+"</description>\n"
             rssFeed = rssFeed + "\t</item>\n"
         
         rssFeed = rssFeed + "</channel>\n"
@@ -653,4 +683,5 @@ app = webapp2.WSGIApplication([
     ('/smallImage', SmallImage),
     ('/img', ImagePage),
     ('/fullImage', FullImage),
+    ('/sendMail', SendMailToReservor)
 ], debug=True)

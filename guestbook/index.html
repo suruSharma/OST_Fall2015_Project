@@ -19,7 +19,7 @@
         {% if userPage == "yes" %}
             <li><a href="#reservations">USER'S RESERVATIONS</a></li>
         {% else %}
-            <li><a href="#reservations">MY RESERVATIONS</a></li>
+            <li><a href="#reservations">YOUR RESERVATIONS</a></li>
         {% endif %}
         {% if userPage == "no" %}
             <li><a href="#allResources">ALL RESOURCES</a></li>
@@ -28,7 +28,7 @@
         {% if userPage == "yes" %}
             <li><a href="#reservations">USER'S RESOURCES</a></li>
         {% else %}
-            <li><a href="#userResources">MY RESOURCES</a></li>
+            <li><a href="#userResources">YOUR RESOURCES</a></li>
         {% endif %}
         {% if userPage == "no" %}
         <li><a href="/add">ADD RESOURCE</a></li>
@@ -73,7 +73,9 @@
                 <th class="col-xs-3">RESOURCE NAME</th>
                 <th class="col-xs-3">START TIME</th>
                 <th class="col-xs-3">DURATION (IN MINUTES)</th>
+                {% if userPage == "no" %}
                 <th class="col-xs-3">DELETE</th>
+                {% endif %}
             </tr>
         </thead>
         {% if reservations %}
@@ -83,12 +85,16 @@
                 <td><a href="/resource?val={{r.resourceId}}">{{r.resourceName}}</a></td>
                 <td>{{r.date}}, {{r.strignStart}}</td>
                 <td>{{r.duration}}</td>
-                <td>
+                
+                    {% if userPage == "no" %}
+                    <td>
                     <form class="form-horizontal" id = "deleteResource" role="form" action="/deleteReservation?val={{r.uid}}" method="post">
                             <input type="hidden" value = "{{r.resourceId}}" id = "resourceId" name = "resourceId">
                             <input class="btn btn-default btn-xs" id="deleteReservation" value="Delete" type="submit">
                         </form>
-                </td>
+                    </td>
+                    {% endif %}
+                
             </tr>
         </tbody>
         {% endfor %}
