@@ -584,7 +584,11 @@ class GenerateRSSFeed(webapp2.RequestHandler):
         rssFeed = rssFeed + "<channel>\n"
         rssFeed = rssFeed + "\t<title>"+str(resource[0].name)+"</title>\n"
         rssFeed = rssFeed + "\t<link>/resource?val="+resource[0].id+"</link>\n"
-        rssFeed = rssFeed + "\t<description>"+str(resource[0].name)+" is available on "+resource[0].dateString+" from "+resource[0].startString+" to "+resource[0].endString+"</description>\n"
+        rssFeed = rssFeed + "\t<description>"+str(resource[0].name)+" is available on "+resource[0].dateString+" from "+resource[0].startString+" to "+resource[0].endString
+        if resource[0].image:
+            rssFeed = rssFeed + "\n\t\tLink to resource image : http://sss665-reservationsystem.appspot.com/img?imgId="+resource[0].imageId+"\n\t"
+        
+        rssFeed = rssFeed + "</description>\n"
         
         for r in reservations:
             rssFeed = rssFeed + "\t<item>\n"
@@ -627,7 +631,7 @@ class MainPage(webapp2.RequestHandler):
             url = users.create_logout_url(self.request.uri)
             url_linktext = 'SIGN OUT'
             template_values = {
-            'user': user.nickname(),
+            'user': user,
             'url': url,
             'userPage' : "no",
             'url_linktext': url_linktext,

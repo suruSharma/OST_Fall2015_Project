@@ -96,9 +96,10 @@
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th class="col-xs-4">RESOURCE NAME</th>
-                    <th class="col-xs-4">AVAILABILITY</th>
-                    <th class="col-xs-4">TAGS</th>
+                    <th class="col-xs-3">RESOURCE NAME</th>
+                    <th class="col-xs-3">AVAILABILITY</th>
+                    <th class="col-xs-3">CAPACITY</th>
+                    <th class="col-xs-3">TAGS</th>
                 </tr>
             </thead>
             {% if resources %}
@@ -114,6 +115,7 @@
                     
                 </td>
                     <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
+                    <td>{{r.capacity}}</td>
                     <td>
                         {% for t in r.tags %}
                             <a href="/tag?val={{t}}">{{t}}</a>
@@ -138,9 +140,10 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th class="col-xs-4">RESOURCE NAME</th>
-                <th class="col-xs-4">AVAILABILITY</th>
-                <th class="col-xs-4">TAGS</th>
+                <th class="col-xs-3">RESOURCE NAME</th>
+                <th class="col-xs-3">AVAILABILITY</th>
+                <th class="col-xs-3">CAPACITY</th>
+                <th class="col-xs-3">TAGS</th>
             </tr>
         </thead>
         {% if userresources %}
@@ -156,6 +159,7 @@
                     
                 </td>
                 <td>{{r.dateString}}, {{r.startString}} - {{r.endString}}</td>
+                <td>{{r.capacity}}</td>
                 <td>
                     {% for t in r.tags %}
                         <a href="/tag?val={{t}}">{{t}}</a>
