@@ -327,7 +327,6 @@ class Add(webapp2.RequestHandler):
         resource.id = resourceId
         resource.dateString = dateInput
         resource.count = 0
-        resource.lastReservedTime = datetime.datetime.now() - datetime.timedelta(hours = 5)
         resource.image = False
         
         if(isImage == "yes"):
